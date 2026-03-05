@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLP Candidate Screening — Architecture Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #232837;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #f43f5e;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code: #a78bfa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 64px 40px 56px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse 80% 60% at 60% -20%, rgba(0,229,255,.07) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 10% 100%, rgba(124,58,237,.06) 0%, transparent 70%),
+                var(--bg);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero-label::before { content:''; width:24px; height:1px; background:var(--accent); }
+  h1 {
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    margin-bottom: 16px;
+  }
+  h1 span { color: var(--accent); }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 600px;
+  }
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    border: 1px solid;
+    letter-spacing: .05em;
+  }
+  .badge.py  { color:#10b981; border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.05); }
+  .badge.js  { color:#f59e0b; border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.05); }
+  .badge.rag { color:#00e5ff; border-color:rgba(0,229,255,.3);  background:rgba(0,229,255,.05); }
+  .badge.local { color:#a78bfa; border-color:rgba(167,139,250,.3); background:rgba(167,139,250,.05); }
+  .stat-grid {
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    gap: 12px;
+    min-width: 180px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    text-align: right;
+  }
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-lbl { font-size: 11px; color: var(--muted); letter-spacing: .05em; }
+
+  /* ── Nav tabs ── */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,12,16,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+  }
+  .nav-inner {
+    display: flex;
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-inner::-webkit-scrollbar { display:none; }
+  .tab {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 16px 20px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover  { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Main layout ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 48px 40px; }
+  section { display: none; }
+  section.active { display: block; }
+
+  /* ── Section header ── */
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .sec-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,.3);
+    border-radius: 4px;
+    padding: 3px 8px;
+    letter-spacing: .1em;
+  }
+  h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+  }
+
+  /* ── Cards & panels ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title svg { flex-shrink: 0; }
+
+  /* ── Module grid ── */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .module-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    border-top: 3px solid;
+    transition: transform .15s;
+  }
+  .module-card:hover { transform: translateY(-2px); }
+  .module-card.cyan   { border-top-color: var(--accent); }
+  .module-card.violet { border-top-color: var(--accent2); }
+  .module-card.amber  { border-top-color: var(--accent3); }
+  .module-card.green  { border-top-color: var(--accent4); }
+  .module-card.rose   { border-top-color: var(--accent5); }
+  .module-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .module-type {
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .module-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  .module-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .tag {
+    font-family:'Space Mono',monospace;
+    font-size:10px;
+    padding:2px 8px;
+    border-radius:3px;
+    background: rgba(255,255,255,.05);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Pipeline flow ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .pipeline-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 32px;
+  }
+  .pipeline-step:last-child { padding-bottom: 0; }
+  .pipe-line-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .pipe-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    background: var(--bg);
+    z-index: 1;
+  }
+  .pipe-connector {
+    width: 2px;
+    flex: 1;
+    min-height: 24px;
+    background: linear-gradient(to bottom, currentColor, transparent);
+    margin-top: 4px;
+    opacity: .3;
+  }
+  .pipe-content {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .pipe-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .pipe-desc { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+  .pipe-detail {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--code);
+    background: rgba(167,139,250,.06);
+    border: 1px solid rgba(167,139,250,.15);
+    border-radius: 6px;
+    padding: 8px 12px;
+    line-height: 1.7;
+  }
+
+  /* ── Tech stack table ── */
+  .tech-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tech-table thead tr {
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tech-table th { padding: 10px 16px; text-align: left; font-weight: 400; }
+  .tech-table td { padding: 12px 16px; border-bottom: 1px solid rgba(35,40,55,.6); vertical-align: top; }
+  .tech-table tr:last-child td { border-bottom: none; }
+  .tech-table tr:hover td { background: rgba(255,255,255,.02); }
+  .tech-name {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .tech-cat {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  /* ── Data flow diagram ── */
+  .flow-svg-wrap { overflow-x: auto; }
+  svg.flow { display: block; min-width: 700px; }
+
+  /* ── Improvement cards ── */
+  .improve-list { display: flex; flex-direction: column; gap: 16px; }
+  .improve-card {
+    display: flex;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    align-items: flex-start;
+  }
+  .improve-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .improve-body h4 { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+  .improve-body p  { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  .improve-priority {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .08em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+  .p-high   { background:rgba(244,63,94,.1);  color:#f43f5e; border:1px solid rgba(244,63,94,.3); }
+  .p-med    { background:rgba(245,158,11,.1); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+  .p-low    { background:rgba(16,185,129,.1); color:#10b981; border:1px solid rgba(16,185,129,.3); }
+
+  /* ── Architecture diagram ── */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    overflow-x: auto;
+  }
+
+  /* ── Responsive ── */
+  @media(max-width:768px) {
+    .hero { padding: 40px 20px 36px; }
+    .hero-grid { grid-template-columns: 1fr; }
+    .stat-grid { display: none; }
+    main { padding: 32px 20px; }
+    .nav { padding: 0 20px; }
+  }
+
+  /* ── Utility ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .two-col { grid-template-columns: 1fr; } }
+  .note {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    background: rgba(245,158,11,.06);
+    border: 1px solid rgba(245,158,11,.2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+  .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+  /* Animate in */
+  section.active > * {
+    animation: fadeUp .35s ease both;
+  }
+  section.active > *:nth-child(2) { animation-delay:.05s }
+  section.active > *:nth-child(3) { animation-delay:.1s }
+  section.active > *:nth-child(4) { animation-delay:.15s }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<div class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-label">Architecture Analysis Report</div>
+      <h1>NLP <span>Candidate</span><br>Screening System</h1>
+      <p class="hero-sub">A deep-dive into the AI-powered recruitment pre-screening system built by SarraSoya — covering architecture, NLP pipeline, data flow, and actionable improvements.</p>
+      <div class="badges">
+        <span class="badge py">Python 60%</span>
+        <span class="badge js">JavaScript 40%</span>
+        <span class="badge rag">RAG Pipeline</span>
+        <span class="badge local">100% Local LLM</span>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><span class="stat-val">14</span><span class="stat-lbl">Source Files</span></div>
+      <div class="stat-card"><span class="stat-val">768</span><span class="stat-lbl">Embedding Dims</span></div>
+      <div class="stat-card"><span class="stat-val">3</span><span class="stat-lbl">Pipeline Phases</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="tab active" onclick="show('arch',this)">Architecture</button>
+    <button class="tab" onclick="show('modules',this)">Modules</button>
+    <button class="tab" onclick="show('nlp',this)">NLP Pipeline</button>
+    <button class="tab" onclick="show('stack',this)">Tech Stack</button>
+    <button class="tab" onclick="show('flow',this)">Data Flow</button>
+    <button class="tab" onclick="show('improvements',this)">Improvements</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════ 1. SYSTEM ARCHITECTURE ══════════ -->
+<section id="arch" class="active">
+  <div class="sec-header">
+    <span class="sec-num">01</span>
+    <h2>System Architecture</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      High-Level Overview
+    </div>
+    <p style="font-size:14px;color:#94a3b8;line-height:1.7;">
+      This is a <strong style="color:var(--text)">fully local, privacy-first AI recruitment system</strong> that combines a Retrieval-Augmented Generation (RAG) pipeline with a conversational chatbot. It ingests candidate CVs as PDFs, embeds and stores them in a vector database, ranks candidates against a job description, and conducts automated gap-filling interviews via chat. Critically, <strong style="color:var(--accent)">all LLM inference runs on-device via Ollama</strong> — no cloud API calls are made.
+    </p>
+  </div>
+
+  <!-- Architecture Diagram SVG -->
+  <div class="arch-diagram">
+    <svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:880px;display:block;margin:0 auto;">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+        </marker>
+        <marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00e5ff"/>
+        </marker>
+        <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10b981"/>
+        </marker>
+      </defs>
+
+      <!-- Background zones -->
+      <!-- Input zone -->
+      <rect x="10" y="20" width="190" height="480" rx="8" fill="#111318" stroke="#232837" stroke-width="1"/>
+      <text x="105" y="44" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9" letter-spacing="2">INPUT LAYER</text>
+
+      <!-- Core zone -->
+      <rect x="220" y="20" width="440" height="480" rx="8" fill="#111318" stroke="#232837" stroke-width="1"/>
+      <text x="440" y="44" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9" letter-spacing="2">CORE PROCESSING LAYER</text>
+
+      <!-- Output zone -->
+      <rect x="680" y="20" width="190" height="480" rx="8" fill="#111318" stroke="#232837" stroke-width="1"/>
+      <text x="775" y="44" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9" letter-spacing="2">OUTPUT LAYER</text>
+
+      <!-- INPUT NODES -->
+      <!-- PDF CVs -->
+      <rect x="30" y="70" width="150" height="52" rx="6" fill="#0a0c10" stroke="#00e5ff" stroke-width="1.5"/>
+      <text x="105" y="91" text-anchor="middle" fill="#00e5ff" font-family="'Space Mono',monospace" font-size="10" font-weight="700">PDF CVs</text>
+      <text x="105" y="109" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">./cvs/ directory</text>
+
+      <!-- Job Description -->
+      <rect x="30" y="150" width="150" height="52" rx="6" fill="#0a0c10" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="105" y="171" text-anchor="middle" fill="#a78bfa" font-family="'Space Mono',monospace" font-size="10" font-weight="700">Job Description</text>
+      <text x="105" y="189" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">config.py</text>
+
+      <!-- Chat Input -->
+      <rect x="30" y="420" width="150" height="52" rx="6" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="105" y="441" text-anchor="middle" fill="#f59e0b" font-family="'Space Mono',monospace" font-size="10" font-weight="700">HR User Input</text>
+      <text x="105" y="459" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Chainlit UI</text>
+
+      <!-- CORE NODES -->
+      <!-- ingest.py -->
+      <rect x="240" y="65" width="150" height="62" rx="6" fill="#0a0c10" stroke="#00e5ff" stroke-width="1.5"/>
+      <text x="315" y="88" text-anchor="middle" fill="#00e5ff" font-family="'Space Mono',monospace" font-size="11" font-weight="700">ingest.py</text>
+      <text x="315" y="104" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">PDF Parse + Chunk</text>
+      <text x="315" y="118" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">nomic-embed-text</text>
+
+      <!-- Pinecone -->
+      <rect x="420" y="55" width="150" height="80" rx="6" fill="#0a0c10" stroke="#10b981" stroke-width="2"/>
+      <text x="495" y="84" text-anchor="middle" fill="#10b981" font-family="'Space Mono',monospace" font-size="11" font-weight="700">Pinecone</text>
+      <text x="495" y="100" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Vector DB</text>
+      <text x="495" y="114" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">dim=768 / cosine</text>
+      <text x="495" y="126" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">SHA256 chunk IDs</text>
+
+      <!-- screening.py -->
+      <rect x="240" y="190" width="150" height="62" rx="6" fill="#0a0c10" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="315" y="213" text-anchor="middle" fill="#a78bfa" font-family="'Space Mono',monospace" font-size="11" font-weight="700">screening.py</text>
+      <text x="315" y="229" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Score vs JD</text>
+      <text x="315" y="243" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Gap Detection</text>
+
+      <!-- Ollama / gemma:7b -->
+      <rect x="420" y="185" width="150" height="80" rx="6" fill="#0a0c10" stroke="#f59e0b" stroke-width="2"/>
+      <text x="495" y="214" text-anchor="middle" fill="#f59e0b" font-family="'Space Mono',monospace" font-size="11" font-weight="700">Ollama LLM</text>
+      <text x="495" y="230" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">gemma:7b</text>
+      <text x="495" y="246" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">100% Local</text>
+      <text x="495" y="260" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">nomic-embed-text</text>
+
+      <!-- chatbot.py -->
+      <rect x="240" y="340" width="150" height="62" rx="6" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="315" y="363" text-anchor="middle" fill="#f59e0b" font-family="'Space Mono',monospace" font-size="11" font-weight="700">chatbot.py</text>
+      <text x="315" y="379" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Gap Q&amp;A Flow</text>
+      <text x="315" y="393" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">HR Summary Gen</text>
+
+      <!-- app.py / Chainlit -->
+      <rect x="240" y="430" width="150" height="52" rx="6" fill="#0a0c10" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="315" y="451" text-anchor="middle" fill="#f43f5e" font-family="'Space Mono',monospace" font-size="11" font-weight="700">app.py</text>
+      <text x="315" y="467" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Chainlit Orchestrator</text>
+
+      <!-- store.py -->
+      <rect x="420" y="330" width="150" height="62" rx="6" fill="#0a0c10" stroke="#64748b" stroke-width="1"/>
+      <text x="495" y="353" text-anchor="middle" fill="#94a3b8" font-family="'Space Mono',monospace" font-size="11" font-weight="700">store.py</text>
+      <text x="495" y="369" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">State Management</text>
+      <text x="495" y="383" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">JSON Persistence</text>
+
+      <!-- OUTPUT NODES -->
+      <!-- candidates.json -->
+      <rect x="700" y="80" width="150" height="52" rx="6" fill="#0a0c10" stroke="#10b981" stroke-width="1.5"/>
+      <text x="775" y="101" text-anchor="middle" fill="#10b981" font-family="'Space Mono',monospace" font-size="10" font-weight="700">candidates.json</text>
+      <text x="775" y="119" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Scores + Gaps</text>
+
+      <!-- chat_history.json -->
+      <rect x="700" y="160" width="150" height="52" rx="6" fill="#0a0c10" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="775" y="181" text-anchor="middle" fill="#a78bfa" font-family="'Space Mono',monospace" font-size="10" font-weight="700">chat_history.json</text>
+      <text x="775" y="199" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">Full chat logs</text>
+
+      <!-- HR Summary -->
+      <rect x="700" y="340" width="150" height="52" rx="6" fill="#0a0c10" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="775" y="361" text-anchor="middle" fill="#f43f5e" font-family="'Space Mono',monospace" font-size="10" font-weight="700">HR Summary</text>
+      <text x="775" y="379" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">LLM-generated report</text>
+
+      <!-- recruitment_ui.jsx -->
+      <rect x="700" y="420" width="150" height="52" rx="6" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="775" y="441" text-anchor="middle" fill="#f59e0b" font-family="'Space Mono',monospace" font-size="10" font-weight="700">React UI</text>
+      <text x="775" y="459" text-anchor="middle" fill="#64748b" font-family="'Space Mono',monospace" font-size="9">recruitment_ui.jsx</text>
+
+      <!-- ARROWS -->
+      <!-- CVs → ingest -->
+      <line x1="180" y1="96" x2="237" y2="96" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#arr-c)"/>
+      <!-- JD → screening -->
+      <line x1="180" y1="176" x2="237" y2="221" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- ingest → Pinecone -->
+      <line x1="390" y1="96" x2="417" y2="96" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#arr-c)"/>
+      <!-- ingest → Ollama (embed) -->
+      <line x1="315" y1="127" x2="460" y2="185" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <!-- screening → Pinecone (query) -->
+      <line x1="390" y1="221" x2="417" y2="135" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- screening → Ollama (score) -->
+      <line x1="390" y1="221" x2="417" y2="221" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- screening → candidates.json -->
+      <line x1="570" y1="135" x2="697" y2="106" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-g)"/>
+      <!-- chatbot → Ollama -->
+      <line x1="390" y1="371" x2="417" y2="265" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- chatbot → store -->
+      <line x1="390" y1="371" x2="417" y2="361" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+      <!-- store → chat_history -->
+      <line x1="570" y1="361" x2="697" y2="186" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <!-- app.py → chatbot -->
+      <line x1="315" y1="430" x2="315" y2="402" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- HR user → app.py -->
+      <line x1="180" y1="446" x2="237" y2="456" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- chatbot → HR Summary -->
+      <line x1="390" y1="371" x2="697" y2="366" stroke="#f43f5e" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <!-- app → React UI -->
+      <line x1="390" y1="456" x2="697" y2="446" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- PHASE LABELS -->
+      <text x="315" y="172" text-anchor="middle" fill="#00e5ff" font-family="'Space Mono',monospace" font-size="8" opacity=".7">① INGEST</text>
+      <text x="315" y="325" text-anchor="middle" fill="#a78bfa" font-family="'Space Mono',monospace" font-size="8" opacity=".7">② SCREEN</text>
+      <text x="315" y="425" text-anchor="middle" fill="#f59e0b" font-family="'Space Mono',monospace" font-size="8" opacity=".7">③ CHAT</text>
+    </svg>
+  </div>
+
+  <div class="note">
+    ⚠ NOTED: The .env file is committed to the repository, exposing the Pinecone API key. This is a critical security issue that must be addressed before any production use (see Improvements section).
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Three-Phase Workflow</div>
+      <div style="font-size:13px;color:#94a3b8;line-height:2;">
+        <div>① <strong style="color:var(--accent)">Ingest</strong> — PDF CVs → chunks → embeddings → Pinecone upsert</div>
+        <div>② <strong style="color:var(--accent2)">Screen</strong> — JD query → similarity search → LLM scoring → gap detection</div>
+        <div>③ <strong style="color:var(--accent3)">Chat</strong> — Select candidate → gap-filling Q&A → HR summary generation</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Key Design Decisions</div>
+      <div style="font-size:13px;color:#94a3b8;line-height:2;">
+        <div>🔒 <strong style="color:var(--text)">Local-only LLM</strong> via Ollama — no external API calls</div>
+        <div>📦 <strong style="color:var(--text)">Pinecone</strong> as managed cloud vector store</div>
+        <div>🔄 <strong style="color:var(--text)">SHA256 IDs</strong> for deterministic re-ingestion deduplication</div>
+        <div>💬 <strong style="color:var(--text)">Chainlit</strong> for rapid chat UI scaffolding</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 2. MODULES ══════════ -->
+<section id="modules">
+  <div class="sec-header">
+    <span class="sec-num">02</span>
+    <h2>Module Responsibilities</h2>
+  </div>
+  <div class="module-grid">
+
+    <div class="module-card cyan">
+      <div class="module-name">app.py</div>
+      <div class="module-type">Orchestrator / Entry Point</div>
+      <div class="module-desc">The Chainlit application entry point. Wires together the three workflow phases (Ingest → Screen → Chat) and exposes the UI event handlers. Manages user interaction flow and calls into chatbot.py, screening.py, and ingest.py.</div>
+      <div class="module-tags"><span class="tag">Chainlit</span><span class="tag">orchestration</span><span class="tag">UI hooks</span></div>
+    </div>
+
+    <div class="module-card cyan">
+      <div class="module-name">ingest.py</div>
+      <div class="module-type">Data Ingestion Pipeline</div>
+      <div class="module-desc">Reads PDF CVs from the ./cvs/ directory using a PDF parser, chunks the text into segments, generates vector embeddings via nomic-embed-text through Ollama, and upserts them to Pinecone with SHA256-derived deterministic IDs to support idempotent re-runs.</div>
+      <div class="module-tags"><span class="tag">PDF parse</span><span class="tag">chunking</span><span class="tag">embeddings</span><span class="tag">Pinecone upsert</span></div>
+    </div>
+
+    <div class="module-card violet">
+      <div class="module-name">screening.py</div>
+      <div class="module-type">Candidate Scoring Engine</div>
+      <div class="module-desc">Embeds the job description, queries Pinecone for semantically similar CV chunks per candidate, passes retrieved context to gemma:7b via Ollama to generate a relevance score and identify skill gaps. Persists results to candidates.json.</div>
+      <div class="module-tags"><span class="tag">RAG query</span><span class="tag">LLM scoring</span><span class="tag">gap detection</span></div>
+    </div>
+
+    <div class="module-card amber">
+      <div class="module-name">chatbot.py</div>
+      <div class="module-type">Conversational Interview Bot</div>
+      <div class="module-desc">Implements the gap-filling interview flow. For a selected shortlisted candidate, reads their detected gaps from candidates.json, generates targeted questions one by one via Ollama, records answers, and produces a final HR summary report at the end of the session.</div>
+      <div class="module-tags"><span class="tag">LLM dialogue</span><span class="tag">gap Q&A</span><span class="tag">HR summary</span></div>
+    </div>
+
+    <div class="module-card green">
+      <div class="module-name">store.py</div>
+      <div class="module-type">State / Persistence Layer</div>
+      <div class="module-desc">Handles reading and writing of application state. Manages candidates.json (candidate profiles, scores, gaps, answers) and chat_history.json (full per-candidate chat logs). Acts as a simple file-based data store in lieu of a database.</div>
+      <div class="module-tags"><span class="tag">JSON I/O</span><span class="tag">state mgmt</span><span class="tag">persistence</span></div>
+    </div>
+
+    <div class="module-card green">
+      <div class="module-name">config.py</div>
+      <div class="module-type">Configuration Module</div>
+      <div class="module-desc">Central configuration hub. Holds the JOB_DESCRIPTION string (editable by the user), Pinecone index name, embedding model name, LLM model name, and other system-wide constants. Reads secrets from the .env file.</div>
+      <div class="module-tags"><span class="tag">env vars</span><span class="tag">JD config</span><span class="tag">model names</span></div>
+    </div>
+
+    <div class="module-card rose">
+      <div class="module-name">recruitment_ui.jsx</div>
+      <div class="module-type">React Frontend Component</div>
+      <div class="module-desc">A React component (40% of the codebase) providing a richer frontend UI, likely for visualizing candidate rankings, scores, and gap analyses beyond the raw Chainlit chat interface. Bridges the Python backend results to a proper recruiter dashboard.</div>
+      <div class="module-tags"><span class="tag">React</span><span class="tag">JSX</span><span class="tag">dashboard</span></div>
+    </div>
+
+    <div class="module-card rose">
+      <div class="module-name">select_candidate_fix.py</div>
+      <div class="module-type">Utility / Bug Fix</div>
+      <div class="module-desc">A patch module addressing edge cases in the candidate selection flow — likely fixing issues with how a candidate is selected from the Chainlit UI and passed into the chatbot session. The "fix" suffix suggests it was extracted from app.py during debugging.</div>
+      <div class="module-tags"><span class="tag">patch</span><span class="tag">selection logic</span></div>
+    </div>
+
+    <div class="module-card amber">
+      <div class="module-name">print_jd.py</div>
+      <div class="module-type">Dev / Debug Utility</div>
+      <div class="module-desc">A small developer utility that prints the current job description from config.py to the terminal. Useful for verifying the JD before running screening without having to open config.py. Not used in the main runtime flow.</div>
+      <div class="module-tags"><span class="tag">debug</span><span class="tag">utility</span></div>
+    </div>
+
+    <div class="module-card cyan">
+      <div class="module-name">chainlit.md</div>
+      <div class="module-type">UI Welcome Screen</div>
+      <div class="module-desc">Markdown file rendered by Chainlit as the welcome/splash screen in the chat interface. Provides user instructions and workflow guidance directly in the UI.</div>
+      <div class="module-tags"><span class="tag">Chainlit</span><span class="tag">markdown</span></div>
+    </div>
+
+    <div class="module-card green">
+      <div class="module-name">.env</div>
+      <div class="module-type">⚠ Secrets File (EXPOSED)</div>
+      <div class="module-desc">Environment variables file containing PINECONE_API_KEY and any other secrets. CRITICAL: this file is committed to the public repository and should immediately be rotated and added to .gitignore.</div>
+      <div class="module-tags"><span class="tag" style="color:#f43f5e;border-color:rgba(244,63,94,.3)">security risk</span><span class="tag">API keys</span></div>
+    </div>
+
+    <div class="module-card violet">
+      <div class="module-name">candidates.json / chat_history.json</div>
+      <div class="module-type">Flat-file Data Store</div>
+      <div class="module-desc">Runtime-generated JSON files used as the application's persistence layer. candidates.json stores all candidate profiles, scores, gap lists, and interview answers. chat_history.json stores full conversation logs per candidate, keyed by candidate_id.</div>
+      <div class="module-tags"><span class="tag">JSON</span><span class="tag">runtime output</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════ 3. NLP PIPELINE ══════════ -->
+<section id="nlp">
+  <div class="sec-header">
+    <span class="sec-num">03</span>
+    <h2>NLP / RAG Pipeline</h2>
+  </div>
+
+  <div class="card" style="margin-bottom:28px;">
+    <div class="card-title">Pipeline Pattern: RAG + Conversational AI</div>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+      The system implements a <strong style="color:var(--text)">Retrieval-Augmented Generation (RAG)</strong> pattern for candidate screening and a <strong style="color:var(--text)">stateful LLM dialogue</strong> pattern for the gap-filling interview. The embedding model (nomic-embed-text, 768-dim) handles semantic representation; the generative model (gemma:7b) handles scoring and question generation. Both run locally via Ollama.
+    </p>
+  </div>
+
+  <div class="pipeline">
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent);color:var(--accent)">01</div>
+        <div class="pipe-connector" style="color:var(--accent)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">PDF Ingestion & Text Extraction</div>
+        <div class="pipe-desc">PDF CVs from ./cvs/ are parsed to extract raw text. Libraries like PyMuPDF or pdfplumber strip formatting and return plain text per page, handling multi-page documents and encoding issues.</div>
+        <div class="pipe-detail">Input: John_Doe.pdf → Output: raw text string
+Tools: PyMuPDF / pdfplumber (likely)
+Handles: multi-page, encoded text, whitespace normalization</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent);color:var(--accent)">02</div>
+        <div class="pipe-connector" style="color:var(--accent)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">Text Chunking</div>
+        <div class="pipe-desc">The extracted CV text is split into overlapping chunks to fit within the embedding model's context window. Each chunk is assigned a deterministic SHA256 ID derived from the candidate ID + chunk index for idempotent Pinecone upserts.</div>
+        <div class="pipe-detail">chunk_id = SHA256(f"{candidate_id}_chunk_{i}")
+Metadata: { candidate_id, source_file, chunk_index, text }
+Strategy: fixed-size with probable overlap for context continuity</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent);color:var(--accent)">03</div>
+        <div class="pipe-connector" style="color:var(--accent)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">Embedding Generation (nomic-embed-text)</div>
+        <div class="pipe-desc">Each chunk is sent to Ollama's local nomic-embed-text model to produce a 768-dimensional dense vector. This model is chosen for its strong semantic understanding and MTEB benchmark performance at its size.</div>
+        <div class="pipe-detail">Model: nomic-embed-text (via Ollama REST API)
+Output dimension: 768
+Similarity metric: cosine
+API: POST localhost:11434/api/embeddings</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent4);color:var(--accent4)">04</div>
+        <div class="pipe-connector" style="color:var(--accent4)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">Pinecone Upsert (Vector Storage)</div>
+        <div class="pipe-desc">Embeddings are upserted to the "recruitment" Pinecone index with full metadata. SHA256 IDs mean re-running ingest.py on the same PDF overwrites existing vectors rather than duplicating them, keeping the index clean.</div>
+        <div class="pipe-detail">Index: "recruitment" | Metric: cosine | Dim: 768
+Namespace: default (no per-candidate namespacing — see improvements)
+Upsert: [ { id, values: [768-dim vector], metadata: {...} } ]</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent2);color:var(--accent2)">05</div>
+        <div class="pipe-connector" style="color:var(--accent2)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">JD Embedding & Similarity Search</div>
+        <div class="pipe-desc">During screening, the job description from config.py is embedded using the same nomic-embed-text model. It is then used to query Pinecone, returning the top-K most semantically similar CV chunks. Results are filtered by candidate_id to aggregate per-candidate context.</div>
+        <div class="pipe-detail">jd_vector = embed(JOB_DESCRIPTION)
+results = pinecone.query(vector=jd_vector, top_k=K, include_metadata=True)
+Grouped by: metadata["candidate_id"]</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent2);color:var(--accent2)">06</div>
+        <div class="pipe-connector" style="color:var(--accent2)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">LLM Scoring & Gap Detection (gemma:7b)</div>
+        <div class="pipe-desc">Retrieved CV chunks per candidate are assembled into a prompt alongside the job description and sent to gemma:7b via Ollama. The LLM is instructed to produce a match score (0–100) and identify specific skill/experience gaps. This is the core RAG generation step.</div>
+        <div class="pipe-detail">Prompt template (inferred):
+  SYSTEM: "You are an expert recruiter..."
+  USER: "Job Description: {jd}\n\nCandidate CV Excerpts: {chunks}\n\n
+         Score this candidate 0-100 and list skill gaps."
+Output: { score: int, gaps: [str] }</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent3);color:var(--accent3)">07</div>
+        <div class="pipe-connector" style="color:var(--accent3)"></div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">Gap-Filling Conversational Interview</div>
+        <div class="pipe-desc">For shortlisted candidates, the chatbot iterates over their detected gaps and generates a targeted interview question for each. The HR user selects a candidate in the Chainlit UI and answers on their behalf (or the candidate answers directly). Answers are captured and stored.</div>
+        <div class="pipe-detail">for gap in candidate["gaps"]:
+    question = llm.generate(f"Ask about: {gap}")
+    answer = await chainlit.ask_user(question)
+    candidate["answers"][gap] = answer</div>
+      </div>
+    </div>
+
+    <div class="pipeline-step">
+      <div class="pipe-line-wrap">
+        <div class="pipe-dot" style="border-color:var(--accent3);color:var(--accent3)">08</div>
+      </div>
+      <div class="pipe-content">
+        <div class="pipe-title">HR Summary Generation</div>
+        <div class="pipe-desc">After all gap questions are answered, the full conversation history — CV chunks, gaps, questions, and answers — is passed to gemma:7b with a summarisation prompt. The model generates a final HR report for the recruiter, which is displayed in the Chainlit UI and persisted to chat_history.json.</div>
+        <div class="pipe-detail">Prompt: "Given this candidate's profile and interview answers, write an HR assessment summary..."
+Output: Markdown/plain-text report
+Saved to: chat_history.json[candidate_id]["summary"]</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════ 4. TECH STACK ══════════ -->
+<section id="stack">
+  <div class="sec-header">
+    <span class="sec-num">04</span>
+    <h2>Technology Stack</h2>
+  </div>
+
+  <div class="card" style="overflow-x:auto;">
+    <table class="tech-table">
+      <thead>
+        <tr>
+          <th>Technology</th>
+          <th>Category</th>
+          <th>Role in System</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tech-name">Ollama</span></td>
+          <td><span class="tech-cat" style="color:#f59e0b;background:rgba(245,158,11,.1)">LLM Runtime</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Local model server — serves both the generative LLM and the embedding model via a unified REST API on port 11434</td>
+          <td style="font-size:12px;color:var(--muted);">Privacy-preserving; no data leaves the machine</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">gemma:7b</span></td>
+          <td><span class="tech-cat" style="color:#f59e0b;background:rgba(245,158,11,.1)">Generative LLM</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Powers scoring, gap detection, question generation, and HR summary generation</td>
+          <td style="font-size:12px;color:var(--muted);">Google's 7B model; good balance of capability vs. local resource use</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">nomic-embed-text</span></td>
+          <td><span class="tech-cat" style="color:#00e5ff;background:rgba(0,229,255,.1)">Embedding Model</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Converts CV chunks and job description into 768-dim semantic vectors for similarity search</td>
+          <td style="font-size:12px;color:var(--muted);">Strong MTEB scores; open-source; 768-dim matches Pinecone index config</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">Pinecone</span></td>
+          <td><span class="tech-cat" style="color:#10b981;background:rgba(16,185,129,.1)">Vector Database</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Stores and indexes all candidate CV embeddings; serves cosine similarity queries for RAG retrieval</td>
+          <td style="font-size:12px;color:var(--muted);">Managed cloud service; free tier available; index dim=768, metric=cosine</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">Chainlit</span></td>
+          <td><span class="tech-cat" style="color:#a78bfa;background:rgba(167,139,250,.1)">Chat UI Framework</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Provides the entire chat interface, session management, action buttons, and async message handling with minimal boilerplate</td>
+          <td style="font-size:12px;color:var(--muted);">Python-native; similar to Streamlit but chat-first; easy async support</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">React + JSX</span></td>
+          <td><span class="tech-cat" style="color:#f59e0b;background:rgba(245,158,11,.1)">Frontend</span></td>
+          <td style="font-size:13px;color:#94a3b8;">recruitment_ui.jsx provides a dedicated recruiter dashboard beyond the Chainlit chat view — likely for ranking visualisation and candidate comparison</td>
+          <td style="font-size:12px;color:var(--muted);">40% of codebase by language; unclear how it's served/integrated</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">Python 3.11+</span></td>
+          <td><span class="tech-cat" style="color:#10b981;background:rgba(16,185,129,.1)">Core Language</span></td>
+          <td style="font-size:13px;color:#94a3b8;">All backend logic: ingestion, screening, chatbot, state management, configuration</td>
+          <td style="font-size:12px;color:var(--muted);">3.11+ required for performance improvements and match syntax</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">python-dotenv</span></td>
+          <td><span class="tech-cat" style="color:#64748b;background:rgba(100,116,139,.1)">Config</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Loads PINECONE_API_KEY and other secrets from .env file into environment variables for config.py to consume</td>
+          <td style="font-size:12px;color:var(--muted);">⚠ .env is committed to repo — secrets are exposed</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">PDF Library</span></td>
+          <td><span class="tech-cat" style="color:#64748b;background:rgba(100,116,139,.1)">Document Parsing</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Parses PDF resumes to extract plain text; likely PyMuPDF (fitz) or pdfplumber based on common usage in similar stacks</td>
+          <td style="font-size:12px;color:var(--muted);">requirements.txt not directly accessible; inferred from pattern</td>
+        </tr>
+        <tr>
+          <td><span class="tech-name">JSON (stdlib)</span></td>
+          <td><span class="tech-cat" style="color:#64748b;background:rgba(100,116,139,.1)">Persistence</span></td>
+          <td style="font-size:13px;color:#94a3b8;">Flat-file persistence for candidates.json and chat_history.json — no database server required</td>
+          <td style="font-size:12px;color:var(--muted);">Simple but not suitable for concurrent access or large scale</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    📋 Note: requirements.txt was not directly accessible from the public GitHub view. Technology attribution above is based on the README, file structure, Pinecone metadata schema, and architecture patterns. Some library names (e.g. the PDF parser) are inferred.
+  </div>
+</section>
+
+<!-- ══════════ 5. DATA FLOW ══════════ -->
+<section id="flow">
+  <div class="sec-header">
+    <span class="sec-num">05</span>
+    <h2>Data Flow Diagram</h2>
+  </div>
+
+  <!-- Phase 1: Ingest -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent)">① Ingestion Data Flow</div>
+    <div class="flow-svg-wrap">
+      <svg class="flow" viewBox="0 0 720 90" style="height:90px;">
+        <defs>
+          <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3z" fill="#00e5ff"/>
+          </marker>
+        </defs>
+        <!-- boxes -->
+        <rect x="10" y="20" width="100" height="50" rx="5" fill="#0a0c10" stroke="#00e5ff" stroke-width="1.5"/>
+        <text x="60" y="43" text-anchor="middle" fill="#00e5ff" font-size="11" font-family="'Space Mono',monospace">PDF CVs</text>
+        <text x="60" y="59" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">./cvs/</text>
+
+        <rect x="145" y="20" width="110" height="50" rx="5" fill="#0a0c10" stroke="#00e5ff" stroke-width="1.5"/>
+        <text x="200" y="43" text-anchor="middle" fill="#00e5ff" font-size="11" font-family="'Space Mono',monospace">Text Extractor</text>
+        <text x="200" y="59" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">ingest.py</text>
+
+        <rect x="290" y="20" width="100" height="50" rx="5" fill="#0a0c10" stroke="#00e5ff" stroke-width="1.5"/>
+        <text x="340" y="43" text-anchor="middle" fill="#00e5ff" font-size="11" font-family="'Space Mono',monospace">Chunker</text>
+        <text x="340" y="59" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">SHA256 IDs</text>
+
+        <rect x="425" y="20" width="120" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="485" y="43" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">nomic-embed</text>
+        <text x="485" y="59" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">768-dim vector</text>
+
+        <rect x="580" y="20" width="130" height="50" rx="5" fill="#0a0c10" stroke="#10b981" stroke-width="1.5"/>
+        <text x="645" y="43" text-anchor="middle" fill="#10b981" font-size="11" font-family="'Space Mono',monospace">Pinecone</text>
+        <text x="645" y="59" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">upsert + metadata</text>
+
+        <!-- arrows -->
+        <line x1="110" y1="45" x2="142" y2="45" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="255" y1="45" x2="287" y2="45" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="390" y1="45" x2="422" y2="45" stroke="#00e5ff" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="545" y1="45" x2="577" y2="45" stroke="#10b981" stroke-width="1.5" marker-end="url(#a1)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Phase 2: Screening -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2)">② Screening Data Flow</div>
+    <div class="flow-svg-wrap">
+      <svg class="flow" viewBox="0 0 720 110" style="height:110px;">
+        <defs>
+          <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3z" fill="#a78bfa"/>
+          </marker>
+          <marker id="a2g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3z" fill="#10b981"/>
+          </marker>
+        </defs>
+
+        <rect x="10" y="30" width="110" height="50" rx="5" fill="#0a0c10" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="65" y="53" text-anchor="middle" fill="#a78bfa" font-size="11" font-family="'Space Mono',monospace">Job Desc.</text>
+        <text x="65" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">config.py</text>
+
+        <rect x="150" y="30" width="120" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="210" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">Embed (JD)</text>
+        <text x="210" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">nomic-embed</text>
+
+        <rect x="300" y="30" width="120" height="50" rx="5" fill="#0a0c10" stroke="#10b981" stroke-width="1.5"/>
+        <text x="360" y="53" text-anchor="middle" fill="#10b981" font-size="11" font-family="'Space Mono',monospace">Pinecone</text>
+        <text x="360" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">top-K query</text>
+
+        <rect x="450" y="30" width="110" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="505" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">gemma:7b</text>
+        <text x="505" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">score + gaps</text>
+
+        <rect x="590" y="30" width="120" height="50" rx="5" fill="#0a0c10" stroke="#10b981" stroke-width="1.5"/>
+        <text x="650" y="53" text-anchor="middle" fill="#10b981" font-size="11" font-family="'Space Mono',monospace">candidates</text>
+        <text x="650" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">.json</text>
+
+        <line x1="120" y1="55" x2="147" y2="55" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+        <line x1="270" y1="55" x2="297" y2="55" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+        <line x1="420" y1="55" x2="447" y2="55" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+        <line x1="560" y1="55" x2="587" y2="55" stroke="#10b981" stroke-width="1.5" marker-end="url(#a2g)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Phase 3: Chat -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3)">③ Chat Interview Data Flow</div>
+    <div class="flow-svg-wrap">
+      <svg class="flow" viewBox="0 0 780 110" style="height:110px;">
+        <defs>
+          <marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3z" fill="#f59e0b"/>
+          </marker>
+        </defs>
+
+        <rect x="10" y="30" width="120" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="70" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">Select Candidate</text>
+        <text x="70" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">from candidates.json</text>
+
+        <rect x="160" y="30" width="110" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="215" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">Load Gaps</text>
+        <text x="215" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">chatbot.py</text>
+
+        <rect x="300" y="30" width="110" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="355" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">gemma:7b</text>
+        <text x="355" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">gen question</text>
+
+        <rect x="440" y="30" width="110" height="50" rx="5" fill="#0a0c10" stroke="#f43f5e" stroke-width="1.5"/>
+        <text x="495" y="53" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="'Space Mono',monospace">Chainlit UI</text>
+        <text x="495" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">ask + capture</text>
+
+        <rect x="580" y="30" width="100" height="50" rx="5" fill="#0a0c10" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="630" y="53" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'Space Mono',monospace">gemma:7b</text>
+        <text x="630" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">HR Summary</text>
+
+        <rect x="710" y="30" width="60" height="50" rx="5" fill="#0a0c10" stroke="#10b981" stroke-width="1.5"/>
+        <text x="740" y="53" text-anchor="middle" fill="#10b981" font-size="10" font-family="'Space Mono',monospace">JSON</text>
+        <text x="740" y="69" text-anchor="middle" fill="#64748b" font-size="9" font-family="'Space Mono',monospace">save</text>
+
+        <line x1="130" y1="55" x2="157" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+        <line x1="270" y1="55" x2="297" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+        <line x1="410" y1="55" x2="437" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+        <line x1="550" y1="55" x2="577" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+        <line x1="680" y1="55" x2="707" y2="55" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">State Transitions</div>
+    <div style="font-family:'Space Mono',monospace;font-size:12px;line-height:2.2;color:#94a3b8;">
+      <span style="color:var(--accent)">PDF file</span>
+      <span style="color:var(--muted)"> →[parse]→ </span>
+      <span style="color:var(--text)">raw text</span>
+      <span style="color:var(--muted)"> →[chunk]→ </span>
+      <span style="color:var(--text)">text segments + SHA256 IDs</span>
+      <span style="color:var(--muted)"> →[embed]→ </span>
+      <span style="color:var(--accent4)">768-dim vectors</span>
+      <span style="color:var(--muted)"> →[upsert]→ </span>
+      <span style="color:var(--accent4)">Pinecone index</span><br>
+      <span style="color:var(--accent2)">Job Description string</span>
+      <span style="color:var(--muted)"> →[embed]→ </span>
+      <span style="color:var(--accent4)">JD vector</span>
+      <span style="color:var(--muted)"> →[query Pinecone]→ </span>
+      <span style="color:var(--text)">top-K CV chunks</span>
+      <span style="color:var(--muted)"> →[LLM]→ </span>
+      <span style="color:var(--accent2)">{score, gaps[]}</span>
+      <span style="color:var(--muted)"> →[store]→ </span>
+      <span style="color:var(--accent4)">candidates.json</span><br>
+      <span style="color:var(--accent3)">gaps[]</span>
+      <span style="color:var(--muted)"> →[LLM Q-gen]→ </span>
+      <span style="color:var(--text)">interview questions</span>
+      <span style="color:var(--muted)"> →[Chainlit]→ </span>
+      <span style="color:var(--text)">answers[]</span>
+      <span style="color:var(--muted)"> →[LLM summarise]→ </span>
+      <span style="color:var(--accent3)">HR report</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6. IMPROVEMENTS ══════════ -->
+<section id="improvements">
+  <div class="sec-header">
+    <span class="sec-num">06</span>
+    <h2>Possible Improvements</h2>
+  </div>
+
+  <div class="improve-list">
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(244,63,94,.1);">🔑</div>
+      <div class="improve-body">
+        <h4>Rotate & Remove Exposed API Key</h4>
+        <p>The .env file containing the Pinecone API key is committed to the public repository. The key must be immediately rotated in Pinecone's dashboard and the file must be added to .gitignore. Use environment variables or a secrets manager (e.g. HashiCorp Vault, AWS Secrets Manager) in production.</p>
+        <span class="improve-priority p-high">CRITICAL — DO IMMEDIATELY</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(244,63,94,.1);">🏷️</div>
+      <div class="improve-body">
+        <h4>Use Pinecone Namespaces per Candidate / Job</h4>
+        <p>Currently all candidates are stored in the default Pinecone namespace. Using per-candidate or per-job namespaces would enable cleaner querying (no need to filter by metadata), prevent cross-job contamination, and make deletion/updates trivially scoped without rebuilding the entire index.</p>
+        <span class="improve-priority p-high">HIGH — Architecture Impact</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(245,158,11,.1);">🗄️</div>
+      <div class="improve-body">
+        <h4>Replace JSON Flat Files with a Proper Database</h4>
+        <p>candidates.json and chat_history.json are single-writer flat files that will corrupt under concurrent access and become unwieldy at scale. Replacing them with SQLite (for local use) or PostgreSQL (for multi-user production) would provide transactions, indexing, and proper query capability. SQLAlchemy would make migration easy.</p>
+        <span class="improve-priority p-high">HIGH — Scalability</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(245,158,11,.1);">⚡</div>
+      <div class="improve-body">
+        <h4>Async / Parallel Candidate Ingestion & Screening</h4>
+        <p>Both ingest.py and screening.py likely process candidates sequentially. With asyncio + concurrent.futures or a task queue (Celery/Redis), all candidates could be embedded and scored in parallel. This becomes critical at 50+ CVs where sequential Ollama calls would take many minutes.</p>
+        <span class="improve-priority p-med">MEDIUM — Performance</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(245,158,11,.1);">🔗</div>
+      <div class="improve-body">
+        <h4>Clarify & Properly Integrate the React Frontend</h4>
+        <p>recruitment_ui.jsx constitutes 40% of the codebase but its integration path is unclear — there is no backend API server (FastAPI/Flask) defined in the repository to serve it. It should be either: (a) integrated as a proper React app with a FastAPI backend, or (b) replaced by extending the Chainlit interface with custom elements.</p>
+        <span class="improve-priority p-med">MEDIUM — Architecture Coherence</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(245,158,11,.1);">📊</div>
+      <div class="improve-body">
+        <h4>Add Prompt Engineering & Structured Output Parsing</h4>
+        <p>The LLM scoring step likely produces free-text responses that are parsed heuristically. Switching to structured output prompting (JSON mode via constrained decoding, or Pydantic output parsers via LangChain/LlamaIndex) would make score and gap extraction deterministic, reducing parse failures and prompt sensitivity.</p>
+        <span class="improve-priority p-med">MEDIUM — Reliability</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(16,185,129,.1);">🧪</div>
+      <div class="improve-body">
+        <h4>Add Testing: Unit + Integration</h4>
+        <p>There are no test files in the repository. At minimum: unit tests for the chunking logic and SHA256 ID generation, integration tests for the ingest → Pinecone round-trip (using a local Pinecone mock or a test namespace), and end-to-end tests for the screening pipeline with fixture CVs.</p>
+        <span class="improve-priority p-low">MEDIUM — Code Quality</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(16,185,129,.1);">🤖</div>
+      <div class="improve-body">
+        <h4>Upgrade or Make LLM Model Configurable</h4>
+        <p>gemma:7b is a reasonable default but may produce inconsistent scoring. Consider: (a) adding a config option to swap in llama3, mistral, or phi-3 for comparison, (b) adding a system-level evaluation harness to benchmark different models on a small gold-standard candidate set, and (c) using a larger model (13B+) for the final HR summary generation if hardware permits.</p>
+        <span class="improve-priority p-low">LOW — Capability</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(16,185,129,.1);">📦</div>
+      <div class="improve-body">
+        <h4>Containerise with Docker Compose</h4>
+        <p>Package the entire stack (Python app + Ollama + models) in a docker-compose.yml with an ollama service and an app service. This eliminates the multi-step manual setup (install Ollama, pull 2 models, configure Pinecone, create venv, etc.) and makes the project immediately runnable with a single command anywhere.</p>
+        <span class="improve-priority p-low">LOW — Developer Experience</span>
+      </div>
+    </div>
+
+    <div class="improve-card">
+      <div class="improve-icon" style="background:rgba(16,185,129,.1);">⚖️</div>
+      <div class="improve-body">
+        <h4>Add Bias Detection & Fairness Guardrails</h4>
+        <p>LLM-based candidate scoring is vulnerable to demographic bias encoded in the training data. The system should include: (a) PII stripping before embedding (names, locations, photos), (b) a bias audit prompt alongside the scoring prompt to flag potentially discriminatory reasoning, and (c) human-in-the-loop confirmation before final shortlisting decisions.</p>
+        <span class="improve-priority p-low">LOW — Ethics</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
