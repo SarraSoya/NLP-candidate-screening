@@ -1,0 +1,68 @@
+{
+  "alice_johnson": {
+    "candidate_id": "alice_johnson",
+    "source_file": "Alice_Johnson.pdf",
+    "namespace": "__default__",
+    "chunks": 3,
+    "ingested_at": "2026-03-03T18:33:48.812702Z",
+    "preview": "Alice Johnson\n alice.johnson@email.com | +1 (312) 555-0101 | github.com/alicejohnson | Chicago, IL\nPROFESSIONAL SUMMARY\nPython backend developer with 6 years of experience building REST APIs and data-driven applications. Strong\nbackground in FastAPI and Django, with solid experience deploying on AWS. Looking to grow into larger-scale\ndistributed systems and cloud-native architecture.\nWORK EXPERIENCE\nSenior Backend Developer — TechCorp Solutions\nMar 2020 – Present | Chicago, IL\n Built and mainta",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  },
+  "bob_martinez": {
+    "candidate_id": "bob_martinez",
+    "source_file": "Bob_Martinez.pdf",
+    "namespace": "__default__",
+    "chunks": 2,
+    "ingested_at": "2026-03-03T18:33:49.999391Z",
+    "preview": "Bob Martinez\n bob.martinez@email.com | +1 (305) 555-0404 | Miami, FL\nPROFESSIONAL SUMMARY\nFrontend-focused developer with 4 years of experience in React and JavaScript ecosystems. Some Python\nscripting experience for automation tasks. Seeking to transition toward backend development roles.\nWORK EXPERIENCE\nFrontend Developer — CreativeAgency\nJun 2020 – Present | Miami, FL\n Built responsive web applications using React, TypeScript, and Redux.\n Wrote Python scripts for data scraping and automatio",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  },
+  "carol_white": {
+    "candidate_id": "carol_white",
+    "source_file": "Carol_White.pdf",
+    "namespace": "__default__",
+    "chunks": 4,
+    "ingested_at": "2026-03-03T18:33:51.664808Z",
+    "preview": "Carol White\n carol.white@email.com | +1 (415) 555-0303 | linkedin.com/in/carolwhite | San Francisco, CA\nPROFESSIONAL SUMMARY\nSenior Python Backend Engineer with 8 years of experience designing and scaling distributed systems. Deep\nexpertise in FastAPI, microservices architecture, and cloud infrastructure on GCP and AWS. Passionate about\nTDD, clean code, and building reliable data pipelines that serve millions of users.\nWORK EXPERIENCE\nLead Backend Engineer — DataSystems Inc.\nJan 2020 – Present |",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  },
+  "david_chen": {
+    "candidate_id": "david_chen",
+    "source_file": "David_Chen.pdf",
+    "namespace": "__default__",
+    "chunks": 2,
+    "ingested_at": "2026-03-03T18:33:52.733955Z",
+    "preview": "David Chen\n david.chen@email.com | +1 (646) 555-0202 | New York, NY\nPROFESSIONAL SUMMARY\nFull-stack developer with 5 years of experience primarily in Node.js and Python. Backend-leaning with growing\nexperience in cloud deployments and containerization. Strong communicator and fast learner transitioning\ntoward pure Python backend roles.\nWORK EXPERIENCE\nFull Stack Developer — FinTech Startup\nApr 2021 – Present | New York, NY\n Built microservices in Python (Flask) and Node.js for a payments platfo",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  },
+  "sara_patel": {
+    "candidate_id": "sara_patel",
+    "source_file": "Sara_Patel.pdf",
+    "namespace": "__default__",
+    "chunks": 3,
+    "ingested_at": "2026-03-03T18:33:55.634240Z",
+    "preview": "Sara Patel\n sara.patel@email.com | +44 7911 555 0505 | London, UK | github.com/sarapatel\nPROFESSIONAL SUMMARY\nBackend engineer with 7 years of Python experience specialising in high-throughput APIs, event-driven\narchitectures, and cloud-native systems. Experienced across AWS and Azure, with a strong focus on\nobservability, performance, and engineering best practices.\nWORK EXPERIENCE\nSenior Software Engineer – Backend — GlobalPay Ltd.\nFeb 2019 – Present | London, UK\n Designed and owned Python mi",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  },
+  "emma_laurent_cv": {
+    "candidate_id": "emma_laurent_cv",
+    "source_file": "Emma_Laurent_CV.pdf",
+    "namespace": "__default__",
+    "chunks": 3,
+    "ingested_at": "2026-03-03T18:33:54.202316Z",
+    "preview": "Emma Laurent\nemma.laurent@email.com\n+33 6 45 12 89 30\nLyon, France\nProfessional Summary\nCreative UX/UI Designer with 6 years of experience crafting intuitive digital experiences for mobile\nand web applications. Passionate about human-centered design, accessibility, and visual\nstorytelling. Strong collaborator working closely with product managers and marketing teams to\ntranslate user needs into engaging interfaces.\nWork Experience\nSenior Product Designer — BrightApps Studio\nMarch 2020 – Present ",
+    "match_score": null,
+    "status": "pending",
+    "gaps": []
+  }
+}

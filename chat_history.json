@@ -1,0 +1,113 @@
+{
+  "alice_johnson": [
+    {
+      "role": "assistant",
+      "content": "Can you tell me about any personal projects or experiences that have involved working with Kubernetes?",
+      "timestamp": "2026-03-03T16:00:18.338912"
+    },
+    {
+      "role": "user",
+      "content": "k",
+      "timestamp": "2026-03-03T16:00:18.355308"
+    },
+    {
+      "role": "assistant",
+      "content": "Can you elaborate on your experience working with GCP or Azure, despite holding an AWS certification?",
+      "timestamp": "2026-03-03T16:00:27.589579"
+    },
+    {
+      "role": "user",
+      "content": "no idk",
+      "timestamp": "2026-03-03T16:00:28.762465"
+    },
+    {
+      "role": "assistant",
+      "content": "Can you elaborate on your experience working with message queues, specifically RabbitMQ and Kafka?",
+      "timestamp": "2026-03-03T16:00:37.808165"
+    },
+    {
+      "role": "user",
+      "content": "nop",
+      "timestamp": "2026-03-03T16:00:50.867884"
+    },
+    {
+      "role": "assistant",
+      "content": "\u2705 **Thank you \u2014 your pre-screening is complete.**\n\nOur HR team will review your profile and contact you within 3\u20135 business days.\n\n---\n\n### \ud83d\udccb Internal HR Summary\n\n| | |\n|---|---|\n| **Initial Score** | 75% |\n| **Final Score** | **29%** (\ud83d\udcc9 -0.46 \u2014 gaps confirmed during interview) |\n\n---\n\n## Candidate Overview\n\nAlice Johnson is a seasoned Python backend engineer with 6 years of experience in developing and maintaining scalable web applications. Her portfolio showcases proficiency in various frameworks like FastAPI, Django REST Framework, and Flask alongside SQL and various databases.\n\n## Key Strengths\n\n- Strong command of Python and related libraries.\n- Extensive experience building REST APIs.\n- Deep understanding of data structures and algorithms.\n\n## Remaining Concerns\n\n- Lack of experience with Kubernetes.\n- Limited exposure to cloud platforms beyond AWS certification.\n- No specific experience with message queues.\n\n## Recommendation: HOLD\n\nThe candidate's technical skills are promising, but the lack of Kubernetes experience and limited cloud platform exposure raise concerns for the role's requirements.\n\nPre-screening complete",
+      "timestamp": "2026-03-03T16:01:38.293040"
+    }
+  ],
+  "david_chen": [
+    {
+      "role": "assistant",
+      "content": "Do you have any experience working with the FastAPI framework?",
+      "timestamp": "2026-03-03T18:12:32.918347"
+    },
+    {
+      "role": "assistant",
+      "content": "Do you have any experience working with the FastAPI framework?",
+      "timestamp": "2026-03-03T18:21:24.880287"
+    },
+    {
+      "role": "user",
+      "content": "no",
+      "timestamp": "2026-03-03T18:21:32.202720"
+    },
+    {
+      "role": "assistant",
+      "content": "How do you prioritize rest and recovery in your work routine?",
+      "timestamp": "2026-03-03T18:21:41.730591"
+    },
+    {
+      "role": "user",
+      "content": "yes",
+      "timestamp": "2026-03-03T18:22:01.887739"
+    },
+    {
+      "role": "assistant",
+      "content": "Do you have any experience working with Google Cloud Platform?",
+      "timestamp": "2026-03-03T18:22:10.182923"
+    },
+    {
+      "role": "user",
+      "content": "yes a lotf of exemperoience",
+      "timestamp": "2026-03-03T18:22:25.340689"
+    },
+    {
+      "role": "assistant",
+      "content": "\u2705 **Thank you \u2014 your pre-screening is complete.**\n\nOur HR team will review your profile and contact you within 3\u20135 business days.\n\n---\n\n### \ud83d\udccb Internal HR Summary\n\n| | |\n|---|---|\n| **Initial Score** | 67% |\n| **Final Score** | **53%** (\ud83d\udcc9 -0.14 \u2014 gaps confirmed during interview) |\n\n---\n\n## Candidate Overview\n\nDavid Chen demonstrates potential for the Senior Python Backend Engineer role, but lacks specific mention of key technologies like FastAPI and GCP in his provided profile.\n\n## Key Strengths\n\n- Strong understanding of REST API development.\n- Extensive experience with Python backend technologies.\n- Ability to communicate technical expertise clearly and concisely.\n\n## Remaining Concerns\n\n- Lack of clarity on GCP experience quantification.\n\n## Recommendation: HIRE\n\nCandidate's relevant skills and experience suggest a strong fit for the role, with the potential for further clarification during the interview process.\n\nPre-screening complete",
+      "timestamp": "2026-03-03T18:23:02.298041"
+    }
+  ],
+  "carol_white": [
+    {
+      "role": "assistant",
+      "content": "Do you have any experience working with Azure technologies?",
+      "timestamp": "2026-03-03T18:12:39.800355"
+    },
+    {
+      "role": "user",
+      "content": "yeah actually i did some great researches with azure techs",
+      "timestamp": "2026-03-03T18:13:26.680204"
+    },
+    {
+      "role": "assistant",
+      "content": "\u2705 **Thank you \u2014 your pre-screening is complete.**\n\nOur HR team will review your profile and contact you within 3\u20135 business days.\n\n---\n\n### \ud83d\udccb Internal HR Summary\n\n| | |\n|---|---|\n| **Initial Score** | 67% |\n| **Final Score** | **71%** (\ud83d\udcc8 +0.04 \u2014 improved during interview) |\n\n---\n\n## Candidate Overview\n\nCarol White's background lacks specific information regarding her experience with Azure technologies, as indicated by the missing skill and role entries in her profile. However, she claims to have researched the subject extensively.\n\n## Key Strengths\n\n- Strong analytical and problem-solving skills.\n- Ability to translate complex technical concepts into clear and concise documentation.\n- Passionate about building scalable and efficient backend systems.\n\n## Remaining Concerns\n\nNone.\n\n## Recommendation: HIRE\n\nCarol White's potential and willingness to learn make her a promising candidate despite the missing Azure-related information.\n\nPre-screening complete",
+      "timestamp": "2026-03-03T18:14:02.241052"
+    },
+    {
+      "role": "assistant",
+      "content": "Do you have any experience working with Azure technologies?",
+      "timestamp": "2026-03-03T18:23:50.129353"
+    },
+    {
+      "role": "user",
+      "content": "never",
+      "timestamp": "2026-03-03T18:23:52.520596"
+    },
+    {
+      "role": "assistant",
+      "content": "\u2705 **Thank you \u2014 your pre-screening is complete.**\n\nOur HR team will review your profile and contact you within 3\u20135 business days.\n\n---\n\n### \ud83d\udccb Internal HR Summary\n\n| | |\n|---|---|\n| **Initial Score** | 67% |\n| **Final Score** | **49%** (\ud83d\udcc9 -0.18 \u2014 gaps confirmed during interview) |\n\n---\n\n## Candidate Overview\n\nCarol White's application lacks detailed information regarding relevant skills, experience, and roles. However, her initial score suggests potential alignment with the role.\n\n## Key Strengths\n\n- Strong technical foundation in Python.\n- Ability to translate complex business logic into efficient code.\n- Passionate about building scalable and maintainable backend systems.\n\n## Remaining Concerns\n\n- Lack of information regarding experience with Azure.\n\n## Recommendation: HIRE\nThe candidate's potential and technical background warrant further exploration, particularly if Azure proficiency can be confirmed during the interview process.\n\nPre-screening complete",
+      "timestamp": "2026-03-03T18:24:27.458082"
+    }
+  ]
+}
