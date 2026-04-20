@@ -4,11 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings
-from pinecone import Pinecone
-
 from config import (
     PINECONE_API_KEY,
     PINECONE_INDEX_NAME,
@@ -25,6 +20,8 @@ def get_pinecone_index():
     Return an existing Pinecone index handle. This code assumes the index
     is already created in Pinecone with the correct dimension.
     """
+    from pinecone import Pinecone
+
     pc = Pinecone(api_key=PINECONE_API_KEY)
     existing = [idx.name for idx in pc.list_indexes()]
     if PINECONE_INDEX_NAME not in existing:
@@ -67,10 +64,28 @@ def _save_candidates(db_path: str, data: dict) -> None:
     p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _source_signature(pdf_file: Path) -> str:
+    stat = pdf_file.stat()
+    return f"{stat.st_size}:{stat.st_mtime_ns}"
+
+
+def _is_unchanged(candidate: dict, pdf_file: Path, namespace: str) -> bool:
+    return (
+        candidate.get("source_file") == pdf_file.name
+        and candidate.get("source_signature") == _source_signature(pdf_file)
+        and candidate.get("namespace") == namespace
+    )
+
+
 def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> list[str]:
     """
     Parse all PDFs in CV_FOLDER, split into chunks, embed with Ollama,
-    upsert chunk vectors to Pinecone, AND register candidates in candidates.json.
+    upsert chunk vectors to Pinecone, and register candidates in candidates.json.
+
+    Optimizations:
+    - skip PDFs that have not changed since the last ingestion
+    - batch chunk embeddings per CV instead of one request per chunk
+    - write candidates.json once at the end instead of once per CV
     """
     cv_path = Path(CV_FOLDER)
     if not cv_path.exists():
@@ -82,6 +97,10 @@ def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> lis
 
     # Ensure namespace is consistent (Pinecone UI shows default as "__default__")
     namespace = PINECONE_NAMESPACE or "__default__"
+
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_ollama import OllamaEmbeddings
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     embeddings = OllamaEmbeddings(
         model=OLLAMA_EMBED_MODEL,
@@ -101,9 +120,16 @@ def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> lis
 
     for pdf_file in pdf_files:
         candidate_id = candidate_id_from_filename(pdf_file.name)
+        source_signature = _source_signature(pdf_file)
+        existing_candidate = candidates.get(candidate_id, {})
 
         if progress_callback:
-            progress_callback(f"📄 Processing: {pdf_file.name} → candidate_id={candidate_id}")
+            progress_callback(f"Processing: {pdf_file.name} -> candidate_id={candidate_id}")
+
+        if _is_unchanged(existing_candidate, pdf_file, namespace):
+            if progress_callback:
+                progress_callback(f"Skipping unchanged CV: {pdf_file.name}")
+            continue
 
         loader = PyPDFLoader(str(pdf_file))
         pages = loader.load()
@@ -111,15 +137,27 @@ def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> lis
 
         if not full_text:
             if progress_callback:
-                progress_callback(f"⚠️ Skipping empty PDF: {pdf_file.name}")
+                progress_callback(f"Skipping empty PDF: {pdf_file.name}")
             continue
 
         chunks = splitter.split_text(full_text)
+        if not chunks:
+            if progress_callback:
+                progress_callback(f"Skipping PDF with no chunks: {pdf_file.name}")
+            continue
+
+        # Re-ingesting a changed CV should replace old vectors entirely to avoid stale chunks.
+        if existing_candidate:
+            index.delete(
+                namespace=namespace,
+                filter={"candidate_id": {"$eq": candidate_id}},
+            )
+
+        chunk_embeddings = embeddings.embed_documents(chunks)
 
         vectors = []
-        for i, chunk in enumerate(chunks):
+        for i, (chunk, embedding) in enumerate(zip(chunks, chunk_embeddings)):
             chunk_id = make_chunk_id(candidate_id, i)
-            embedding = embeddings.embed_query(chunk)
             vectors.append(
                 {
                     "id": chunk_id,
@@ -133,7 +171,6 @@ def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> lis
                 }
             )
 
-        # Upsert in batches of 100
         batch_size = 100
         for start in range(0, len(vectors), batch_size):
             index.upsert(
@@ -141,26 +178,28 @@ def ingest_cvs(progress_callback: Optional[Callable[[str], None]] = None) -> lis
                 namespace=namespace,
             )
 
-        # Register/update candidate in local JSON DB (source of truth for UI list)
         candidates[candidate_id] = {
             "candidate_id": candidate_id,
             "source_file": pdf_file.name,
+            "source_signature": source_signature,
             "namespace": namespace,
             "chunks": len(chunks),
             "ingested_at": datetime.utcnow().isoformat() + "Z",
             "preview": full_text[:500],
             # fields that screening will fill later
             "match_score": None,
+            "screening_score": None,
+            "final_score": None,
             "status": "pending",
             "gaps": [],
+            "hr_summary": "",
         }
-        _save_candidates(CANDIDATES_DB, candidates)
-
         ingested.append(candidate_id)
 
         if progress_callback:
-            progress_callback(f"✅ Ingested {len(chunks)} chunks for {candidate_id}")
+            progress_callback(f"Ingested {len(chunks)} chunks for {candidate_id}")
 
+    _save_candidates(CANDIDATES_DB, candidates)
     return ingested
 
 

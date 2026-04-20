@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "TalentScout" }}</title>
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --bg-deep: #dfe8f4;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-strong: #ffffff;
+      --surface-soft: #f7f9fc;
+      --text: #0f172a;
+      --muted: #52607a;
+      --line: #d6deea;
+      --brand: #1746a2;
+      --brand-strong: #12357f;
+      --accent: #0f766e;
+      --danger: #b42318;
+      --success: #157347;
+      --shadow-lg: 0 24px 80px rgba(15, 23, 42, 0.12);
+      --shadow-md: 0 14px 32px rgba(15, 23, 42, 0.08);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Aptos, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(23, 70, 162, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.16), transparent 24%),
+        linear-gradient(180deg, #f7f9fc 0%, #edf2f8 56%, #e5ebf5 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      width: min(1220px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.86);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+    }
+
+    .subpanel,
+    .candidate-card,
+    .message,
+    .detail-card,
+    .log-box,
+    .jd-box,
+    .empty,
+    .stat,
+    .link-chip {
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero,
+    .grid,
+    .split,
+    .auth-grid,
+    .stats {
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      grid-template-columns: 1.08fr 0.92fr;
+      align-items: stretch;
+    }
+
+    .grid.two,
+    .auth-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .split {
+      grid-template-columns: 0.92fr 1.08fr;
+    }
+
+    .stats {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(23, 70, 162, 0.08);
+      color: var(--brand-strong);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0 0 12px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 3vw, 3.3rem);
+    }
+
+    h2 {
+      font-size: clamp(1.3rem, 2vw, 1.9rem);
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.98rem;
+    }
+
+    .muted,
+    .tiny,
+    .meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .tiny {
+      font-size: 0.84rem;
+    }
+
+    .actions,
+    .inline-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .button,
+    button,
+    input[type="submit"] {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+      color: white;
+      box-shadow: 0 10px 24px rgba(23, 70, 162, 0.22);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    .button:hover,
+    button:hover,
+    input[type="submit"]:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(23, 70, 162, 0.24);
+    }
+
+    .button.secondary,
+    button.secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .button.warn,
+    button.warn {
+      background: linear-gradient(135deg, #0f766e 0%, #0c5f59 100%);
+      box-shadow: 0 10px 24px rgba(15, 118, 110, 0.18);
+    }
+
+    .button.danger,
+    button.danger {
+      background: linear-gradient(135deg, #d92d20 0%, #b42318 100%);
+      box-shadow: 0 10px 24px rgba(180, 35, 24, 0.18);
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.94rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--text);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: rgba(23, 70, 162, 0.45);
+      box-shadow: 0 0 0 4px rgba(23, 70, 162, 0.08);
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    .flash-stack {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .flash {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow-md);
+      font-weight: 700;
+    }
+
+    .flash.success { color: var(--success); border-color: rgba(21, 115, 71, 0.18); }
+    .flash.error { color: var(--danger); border-color: rgba(180, 35, 24, 0.18); }
+    .flash.info { color: var(--brand-strong); border-color: rgba(23, 70, 162, 0.18); }
+
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(23, 70, 162, 0.08);
+      color: var(--brand-strong);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .stat {
+      padding: 18px;
+    }
+
+    .stat .value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .detail-list,
+    .message-list,
+    .card-list,
+    .link-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-card,
+    .candidate-card,
+    .message,
+    .log-box,
+    .jd-box,
+    .empty,
+    .link-chip {
+      padding: 18px;
+    }
+
+    .candidate-card.active {
+      border-color: rgba(23, 70, 162, 0.42);
+      box-shadow: 0 16px 34px rgba(23, 70, 162, 0.12);
+    }
+
+    .message.assistant {
+      border-left: 4px solid rgba(23, 70, 162, 0.4);
+    }
+
+    .message.user {
+      border-left: 4px solid rgba(15, 118, 110, 0.45);
+    }
+
+    .message .content,
+    .prewrap {
+      white-space: pre-wrap;
+      line-height: 1.65;
+    }
+
+    .empty {
+      background: rgba(247, 249, 252, 0.98);
+      color: var(--muted);
+      line-height: 1.65;
+      border-style: dashed;
+    }
+
+    .link-chip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .score {
+      font-weight: 800;
+      color: var(--brand-strong);
+    }
+
+    .auth-stage {
+      max-width: 760px;
+      margin: 48px auto 0;
+    }
+
+    .auth-shell {
+      overflow: hidden;
+    }
+
+    .auth-tabs {
+      display: inline-flex;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(23, 70, 162, 0.08);
+      margin-bottom: 22px;
+      gap: 6px;
+    }
+
+    .auth-tabs a {
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .auth-tabs a.active {
+      background: var(--surface-strong);
+      color: var(--brand-strong);
+      box-shadow: var(--shadow-md);
+    }
+
+    .login-card {
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 253, 0.98));
+    }
+
+    .callout {
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: rgba(23, 70, 162, 0.06);
+      border: 1px solid rgba(23, 70, 162, 0.1);
+      color: var(--muted);
+    }
+
+    .speech-tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .speech-status {
+      min-height: 24px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .speech-status.live {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .speech-status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .candidate-room {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .interview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .split,
+      .grid.two,
+      .grid.three,
+      .stats,
+      .auth-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar,
+      .interview-header {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .shell {
+        width: min(100% - 20px, 1220px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">TalentScout</div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

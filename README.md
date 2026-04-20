@@ -1,88 +1,69 @@
 # AI Recruitment Pre-Screening System
 
+This project now runs as a small Flask web app with two separate experiences:
+
+- `Candidate portal`: candidates identify themselves by candidate ID and answer LLM-generated follow-up questions based on screening gaps.
+- `Admin dashboard`: admins ingest CVs, run screening, and review private scores, answers, and HR summaries.
+
+Candidate-facing pages do not expose screening or final scores.
+
 ## Prerequisites
 
-1. **Ollama** running locally with required models:
+1. Python 3.11+
+2. Ollama running locally with the required models:
+
 ```bash
-   ollama pull gemma:7b
-   ollama pull nomic-embed-text
-   ollama serve
+ollama pull gemma:7b
+ollama pull nomic-embed-text
+ollama serve
 ```
 
-2. **Pinecone** — Create a free index at https://app.pinecone.io:
-   - Index name: `recruitment` (or match your `.env`)
-   - Dimension: `768` (for `nomic-embed-text`)
+3. Pinecone index configured for your environment:
+   - Index name: `recruitment` or the value from `.env`
+   - Dimension: `768`
    - Metric: `cosine`
 
-3. **Python 3.11+**
-
----
-
 ## Setup
+
 ```bash
-# 1. Clone / create project folder
-mkdir recruitment_screener && cd recruitment_screener
-
-# 2. Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# 4. Configure environment
-cp .env .env.local
-# Edit .env and fill in your PINECONE_API_KEY
-
-# 5. Add CV PDFs
-mkdir cvs
-# Copy your PDF resumes into ./cvs/
-
-# 6. (Optional) Edit the JOB_DESCRIPTION in config.py
 ```
 
----
+Add your config values in `.env`, especially:
+
+- `PINECONE_API_KEY`
+- `PINECONE_INDEX_NAME`
+- `ADMIN_PASSWORD` (optional, defaults to `hr1234`)
+- `FLASK_SECRET_KEY` (optional for local use, recommended to change)
+
+Put candidate CV PDFs in `./cvs/`.
 
 ## Run
+
 ```bash
-chainlit run app.py
+python app.py
 ```
 
-Open http://localhost:8000 in your browser.
-
----
+Then open `http://127.0.0.1:5000`.
 
 ## Workflow
 
-1. **📥 Ingest CVs** — Parses PDFs, creates embeddings, upserts to Pinecone
-2. **🔍 Run Screening** — Scores each candidate vs JD, detects gaps, saves to `candidates.json`
-3. **💬 Chat as Candidate** — Select a shortlisted candidate, bot asks gap-filling questions one by one, generates HR summary at the end
+1. Log in as admin.
+2. Click `Ingest CVs` to parse local PDFs and register candidates.
+3. Click `Run Screening` to compute scores and detect gaps.
+4. Share the candidate ID with the candidate.
+5. The candidate logs into the candidate portal and completes the interview.
+6. The admin reviews candidate scores, answers, transcript, and saved HR summary.
 
----
+## Output Files
 
-## File Outputs
-
-| File | Contents |
-|---|---|
-| `candidates.json` | All candidate profiles, scores, gaps, answers |
-| `chat_history.json` | Full chat logs per candidate |
-
----
-
-## Pinecone Chunk Metadata Schema
-```json
-{
-  "candidate_id": "john_doe",
-  "source_file": "John_Doe.pdf",
-  "chunk_index": 0,
-  "text": "..."
-}
-```
-
----
+- `candidates.json`: candidate records, screening/final scores, gaps, and HR summary
+- `chat_history.json`: interview transcript per candidate
 
 ## Notes
 
-- Re-ingesting the same PDF **overwrites** existing chunks (deterministic SHA256 IDs)
-- Pinecone dimension must be **768** for `nomic-embed-text`
-- All LLM calls use local Ollama — no OpenAI/cloud LLM calls
+- Screening score is preserved separately from final interview score.
+- Candidate pages intentionally hide all scores and admin-only summaries.
+- Existing Chainlit files can remain in the repo, but the active app entrypoint is now `app.py` with Flask.

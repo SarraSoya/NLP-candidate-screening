@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% set title = "Candidate Interview" %}
+{% block content %}
+  <div class="candidate-room">
+    <section class="panel">
+      <div class="interview-header">
+        <div>
+          <span class="eyebrow">Candidate Interview</span>
+          <h1>{{ candidate_name }}</h1>
+          <p>This space is reserved for your interview only. Internal scores and recruiter evaluation are hidden.</p>
+        </div>
+        <div class="actions">
+          {% if can_interview and not interview_complete and not chat_active %}
+            <form method="post" action="{{ url_for('candidate_start') }}">
+              <button type="submit">Start Interview</button>
+            </form>
+          {% elif can_interview and chat_active %}
+            <span class="button secondary" style="cursor:default;">Interview in progress</span>
+          {% elif interview_complete %}
+            <span class="button secondary" style="cursor:default;">Interview completed</span>
+          {% endif %}
+          <form method="post" action="{{ url_for('candidate_logout') }}">
+            <button type="submit" class="secondary">Logout</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-bottom:20px;">
+        The interview uses a short set of follow-up questions based on the job requirements and the gaps identified in your application.
+      </div>
+
+      {% if messages %}
+        <div class="message-list" style="margin-bottom:20px;">
+          {% for message in messages %}
+            <article class="message {{ message.role }}">
+              <div class="meta">{{ "Interviewer" if message.role == "assistant" else "You" }}</div>
+              <div class="content">{{ message.content }}</div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty" style="margin-bottom:20px;">
+          Start the interview to receive your first question.
+        </div>
+      {% endif %}
+
+      {% if can_interview and not interview_complete and chat_active %}
+        <form method="post" action="{{ url_for('candidate_message') }}">
+          <div>
+            <label for="answer">Your answer</label>
+            <textarea id="answer" name="answer" placeholder="Share your experience clearly and concretely."></textarea>
+            <div class="speech-tools">
+              <button type="button" class="secondary" id="speech-toggle">Start Voice Input</button>
+              <button type="button" class="secondary" id="speech-clear">Clear Draft</button>
+            </div>
+            <div class="speech-status" id="speech-status">Voice input is ready if your browser supports microphone transcription.</div>
+          </div>
+          <div class="actions">
+            <button type="submit">Send Answer</button>
+          </div>
+        </form>
+      {% elif interview_complete %}
+        <div class="empty">
+          Your interview has been submitted successfully. The recruiting team will review it privately.
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}
+{% block scripts %}
+  {% if can_interview and not interview_complete and chat_active %}
+    <script>
+      (() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const answerField = document.getElementById("answer");
+        const toggleButton = document.getElementById("speech-toggle");
+        const clearButton = document.getElementById("speech-clear");
+        const statusBox = document.getElementById("speech-status");
+
+        if (!answerField || !toggleButton || !clearButton || !statusBox) {
+          return;
+        }
+
+        if (!SpeechRecognition) {
+          toggleButton.disabled = true;
+          statusBox.textContent = "Voice input is not available in this browser.";
+          statusBox.classList.add("error");
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        let listening = false;
+        let finalTranscript = "";
+
+        const updateDraft = (text) => {
+          answerField.value = text.trim();
+          answerField.dispatchEvent(new Event("input", { bubbles: true }));
+        };
+
+        const baseText = () => answerField.value.trim();
+
+        toggleButton.addEventListener("click", () => {
+          if (!listening) {
+            finalTranscript = baseText();
+            recognition.start();
+            return;
+          }
+          recognition.stop();
+        });
+
+        clearButton.addEventListener("click", () => {
+          answerField.value = "";
+          finalTranscript = "";
+          answerField.focus();
+        });
+
+        recognition.onstart = () => {
+          listening = true;
+          toggleButton.textContent = "Stop Voice Input";
+          statusBox.textContent = "Listening...";
+          statusBox.classList.add("live");
+          statusBox.classList.remove("error");
+        };
+
+        recognition.onend = () => {
+          listening = false;
+          toggleButton.textContent = "Start Voice Input";
+          statusBox.textContent = "Voice input stopped.";
+          statusBox.classList.remove("live");
+        };
+
+        recognition.onerror = (event) => {
+          listening = false;
+          toggleButton.textContent = "Start Voice Input";
+          statusBox.textContent = `Voice input error: ${event.error}.`;
+          statusBox.classList.remove("live");
+          statusBox.classList.add("error");
+        };
+
+        recognition.onresult = (event) => {
+          let interimTranscript = "";
+          let committedTranscript = finalTranscript ? finalTranscript + " " : "";
+
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const transcript = event.results[i][0].transcript.trim();
+            if (!transcript) {
+              continue;
+            }
+            if (event.results[i].isFinal) {
+              committedTranscript += transcript + " ";
+            } else {
+              interimTranscript += transcript + " ";
+            }
+          }
+
+          finalTranscript = committedTranscript.trim();
+          updateDraft(`${finalTranscript} ${interimTranscript}`.trim());
+        };
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

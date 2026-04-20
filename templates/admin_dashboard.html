@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% set title = "Admin Dashboard" %}
+{% block content %}
+  <section class="panel" style="margin-bottom:20px;">
+    <span class="eyebrow">Admin Dashboard</span>
+    <h1>Candidate screening and interview review</h1>
+    <div class="actions" style="margin-top:18px;">
+      <form method="post" action="{{ url_for('admin_ingest') }}">
+        <button type="submit">Ingest CVs</button>
+      </form>
+      <form method="post" action="{{ url_for('admin_screen') }}">
+        <button type="submit" class="warn">Run Screening</button>
+      </form>
+      <form method="post" action="{{ url_for('admin_logout') }}">
+        <button type="submit" class="secondary">Logout</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="stats" style="margin-bottom:20px;">
+    <div class="stat">
+      <div class="value">{{ stats.total }}</div>
+      <div class="label">Total candidates</div>
+    </div>
+    <div class="stat">
+      <div class="value">{{ stats.shortlisted }}</div>
+      <div class="label">Shortlisted or interviewing</div>
+    </div>
+    <div class="stat">
+      <div class="value">{{ stats.ready }}</div>
+      <div class="label">Review ready</div>
+    </div>
+    <div class="stat">
+      <div class="value">{{ stats.rejected }}</div>
+      <div class="label">Rejected</div>
+    </div>
+    <div class="stat">
+      <div class="value">{{ stats.threshold }}</div>
+      <div class="label">Shortlist threshold</div>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="panel">
+      <h2>All candidates</h2>
+      {% if candidates %}
+        <div class="card-list">
+          {% for candidate in candidates %}
+            <a
+              class="candidate-card {% if selected_candidate and candidate.candidate_id == selected_candidate.candidate_id %}active{% endif %}"
+              href="{{ url_for('admin_dashboard', candidate_id=candidate.candidate_id) }}"
+            >
+              <strong>{{ candidate_name(candidate) }}</strong>
+              <div class="tiny">{{ candidate.candidate_id }}</div>
+              <div class="badge-row">
+                <span class="badge">{{ status_label(candidate.status) }}</span>
+                <span class="badge">Screening: {{ score_label(screening_score(candidate)) }}</span>
+                <span class="badge">Final: {{ score_label(final_score(candidate)) }}</span>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">No candidates found yet. Start by ingesting CVs and running screening.</div>
+      {% endif %}
+    </section>
+
+    <aside class="grid">
+      <section class="panel">
+        <h2>Active job description</h2>
+        <div class="jd-box prewrap">{{ job_description }}</div>
+      </section>
+
+      <section class="panel">
+        <h2>Latest pipeline logs</h2>
+        {% if admin_logs %}
+          <div class="log-box prewrap">{{ admin_logs|join('\n') }}</div>
+        {% else %}
+          <div class="empty">Run ingestion or screening to see logs here.</div>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+
+  <section class="panel" style="margin-top:20px;">
+    <h2>Selected candidate details</h2>
+    {% if selected_candidate %}
+      <div class="grid two">
+        <div class="detail-list">
+          <div class="detail-card">
+            <strong>{{ selected_candidate_name }}</strong>
+            <p class="tiny">{{ selected_candidate.candidate_id }}</p>
+            <div class="badge-row">
+              <span class="badge">Status: {{ status_label(selected_candidate.status) }}</span>
+              <span class="badge">Screening score: {{ score_label(screening_score(selected_candidate)) }}</span>
+              <span class="badge">Final score: {{ score_label(final_score(selected_candidate)) }}</span>
+            </div>
+            {% if selected_candidate.source_file %}
+              <div class="actions" style="margin-top:14px;">
+                <a class="button secondary" href="{{ url_for('admin_candidate_cv', candidate_id=selected_candidate.candidate_id) }}" target="_blank" rel="noopener noreferrer">
+                  Open Resume PDF
+                </a>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="detail-card">
+            <strong>Gap analysis</strong>
+            {% if selected_candidate.gaps %}
+              <div class="detail-list" style="margin-top:12px;">
+                {% for gap in selected_candidate.gaps %}
+                  <div class="detail-card">
+                    <div><strong>Requirement:</strong> {{ gap.requirement }}</div>
+                    <div class="tiny">Status: {{ gap.status }}</div>
+                    <div class="tiny">Reason: {{ gap.reason }}</div>
+                    {% if gap.answer %}
+                      <div class="prewrap" style="margin-top:10px;"><strong>Answer:</strong> {{ gap.answer }}</div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="muted">No gaps were recorded for this candidate.</p>
+            {% endif %}
+          </div>
+
+        </div>
+
+        <div class="detail-card">
+          <strong>Chat transcript</strong>
+          {% if selected_messages %}
+            <div class="message-list" style="margin-top:12px;">
+              {% for message in selected_messages %}
+                <article class="message {{ message.role }}">
+                  <div class="meta">{{ message.role|title }}</div>
+                  <div class="content">{{ message.content }}</div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="muted">No interview transcript recorded for this candidate yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Select a candidate from the list to inspect their scores, answers, and summary.</div>
+    {% endif %}
+  </section>
+{% endblock %}

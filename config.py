@@ -13,6 +13,8 @@ OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")# Paths
 CV_FOLDER = os.getenv("CV_FOLDER", "./cvs")
 CANDIDATES_DB = os.getenv("CANDIDATES_DB", "./candidates.json")
 CHAT_HISTORY_DB = os.getenv("CHAT_HISTORY_DB", "./chat_history.json")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "hr1234")
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "talentscout-local-secret")
 
 # Job Description (edit this directly or load from file)
 JOB_DESCRIPTION = os.getenv("JOB_DESCRIPTION", """

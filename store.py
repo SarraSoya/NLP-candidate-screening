@@ -25,7 +25,9 @@ def get_candidate(candidate_id: str) -> Optional[dict]:
 
 def save_candidate(candidate: dict):
     db = _load(CANDIDATES_DB)
-    db[candidate["candidate_id"]] = candidate
+    existing = db.get(candidate["candidate_id"], {})
+    merged = {**existing, **candidate}
+    db[candidate["candidate_id"]] = merged
     _save(CANDIDATES_DB, db)
 
 def update_candidate_field(candidate_id: str, field: str, value):
@@ -33,6 +35,14 @@ def update_candidate_field(candidate_id: str, field: str, value):
     if candidate_id not in db:
         raise KeyError(f"Candidate {candidate_id} not found")
     db[candidate_id][field] = value
+    db[candidate_id]["updated_at"] = datetime.utcnow().isoformat()
+    _save(CANDIDATES_DB, db)
+
+def update_candidate_fields(candidate_id: str, updates: dict):
+    db = _load(CANDIDATES_DB)
+    if candidate_id not in db:
+        raise KeyError(f"Candidate {candidate_id} not found")
+    db[candidate_id].update(updates)
     db[candidate_id]["updated_at"] = datetime.utcnow().isoformat()
     _save(CANDIDATES_DB, db)
 

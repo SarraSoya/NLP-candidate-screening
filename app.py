@@ -1,461 +1,476 @@
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import chainlit as cl
-from chainlit import Action
+import re
+import uuid
+from functools import wraps
+from pathlib import Path
 
-from config import JOB_DESCRIPTION, SHORTLIST_THRESHOLD
-from ingest import ingest_cvs
-from screening import run_screening
-from store import get_all_candidates, get_shortlisted_candidates, get_candidate
+from flask import (
+    Flask,
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
+
 from chatbot import CandidateChatSession
+from config import ADMIN_PASSWORD, CV_FOLDER, FLASK_SECRET_KEY, JOB_DESCRIPTION, SHORTLIST_THRESHOLD
+from store import get_all_candidates, get_candidate, get_chat_history, update_candidate_fields
 
-executor = ThreadPoolExecutor(max_workers=1)
+app = Flask(__name__)
+app.secret_key = FLASK_SECRET_KEY
 
-HR_PASSWORD = "hr1234"
-
-SESSION_MODE = "mode"
-SESSION_CHAT = "chat_session"
-SESSION_ROLE = "role"
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-async def run_in_thread(fn, *args, **kwargs):
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, lambda: fn(*args, **kwargs))
+ACTIVE_CHAT_SESSIONS = {}
+ADMIN_PIPELINE_LOGS = {}
 
 
-def score_bar(score: float) -> str:
-    pct = int(score * 100)
-    filled = int(score * 12)
-    bar = "▰" * filled + "▱" * (12 - filled)
-    color_icon = "🟢" if score >= 0.75 else "🟡" if score >= 0.5 else "🔴"
-    return f"{color_icon} `{bar}` **{pct}%**"
+def _browser_session_key() -> str:
+    if "browser_session_id" not in session:
+        session["browser_session_id"] = uuid.uuid4().hex
+    return session["browser_session_id"]
 
 
-def status_badge(status: str) -> str:
-    badges = {
-        "shortlisted":  "🔵 Shortlisted",
-        "in_chat":      "🟡 Interviewing",
-        "ready_for_hr": "🟢 Ready for HR",
-        "rejected":     "🔴 Rejected",
-    }
-    return badges.get(status, status)
+def _normalize_candidate_id(raw_value: str) -> str:
+    value = (raw_value or "").strip().lower()
+    value = re.sub(r"\s+", "_", value)
+    return re.sub(r"[^a-z0-9_]", "", value)
 
 
-def divider() -> str:
-    return "\n\n---\n\n"
+def _normalize_candidate_name(raw_value: str) -> str:
+    value = (raw_value or "").strip().lower()
+    value = re.sub(r"[_\-\s]+", " ", value)
+    value = re.sub(r"[^a-z0-9 ]", "", value)
+    return re.sub(r"\s+", " ", value).strip()
 
 
-# ─── Landing Page ─────────────────────────────────────────────────────────────
-
-async def show_landing():
-    cl.user_session.set(SESSION_MODE, "landing")
-    await cl.Message(
-        content=(
-            "# 🏢 TalentScout — AI Recruitment Platform\n\n"
-            "> **Position Open:** Senior Python Backend Engineer\n\n"
-            "| | |\n"
-            "|---|---|\n"
-            "| 🤖 AI-powered CV screening | ✅ Automated candidate interviews |\n"
-            "| 📊 Smart match scoring | 🎯 Top-profile shortlisting |\n\n"
-            "---\n\n"
-            "**Who are you today?**\n"
-            "*Select your role to continue.*"
-        ),
-        actions=[
-            Action(name="role_candidate", payload={"role": "candidate"}, label="👤  I'm a Candidate"),
-            Action(name="role_hr",        payload={"role": "hr"},        label="🔐  HR / Admin Login"),
-        ],
-    ).send()
-
-
-# ─── Candidate Portal ─────────────────────────────────────────────────────────
-
-async def show_candidate_portal():
-    cl.user_session.set(SESSION_MODE, "candidate_menu")
-    await cl.Message(
-        content=(
-            "## 👤 Candidate Portal\n\n"
-            "### 📋 Senior Python Backend Engineer\n"
-            "*TechCorp · Full-time · Remote-friendly*\n\n"
-            "---\n\n"
-            "**Follow these steps to complete your application:**\n\n"
-            "**Step 1 →** `📤 Submit CV` — Upload your PDF for processing\n\n"
-            "**Step 2 →** `🔍 Run AI Screening` — Get scored against the job requirements\n\n"
-            "**Step 3 →** `💬 Start Interview` — Answer a few targeted questions\n\n"
-            "---\n\n"
-            "*What would you like to do?*"
-        ),
-        actions=[
-            Action(name="candidate_ingest", payload={"a": "1"}, label="📤  Submit CV"),
-            Action(name="candidate_screen", payload={"a": "1"}, label="🔍  Run AI Screening"),
-            Action(name="candidate_chat",   payload={"a": "1"}, label="💬  Start Interview"),
-            Action(name="back_landing",     payload={"a": "1"}, label="← Main Menu"),
-        ],
-    ).send()
-
-
-@cl.action_callback("role_candidate")
-async def on_role_candidate(action: Action):
-    cl.user_session.set(SESSION_ROLE, "candidate")
-    await show_candidate_portal()
-
-
-@cl.action_callback("candidate_ingest")
-async def on_candidate_ingest(action: Action):
-    await cl.Message(content="### 📤 Submitting CVs...\n\n⏳ Parsing and indexing your documents — please wait.").send()
-    messages = []
-    def cb(t): messages.append(t)
-    try:
-        ingested = await run_in_thread(ingest_cvs, cb)
-        log_lines = "\n".join(f"  {m}" for m in messages)
-        await cl.Message(
-            content=(
-                f"### ✅ Submission Complete\n\n"
-                f"**{len(ingested)} CV(s) indexed successfully.**\n\n"
-                f"```\n{log_lines}\n```\n\n"
-                f"> Next step: click **🔍 Run AI Screening** to score candidates against the job description."
-            )
-        ).send()
-    except Exception as e:
-        await cl.Message(content=f"### ❌ Submission Failed\n\n`{e}`\n\nPlease check that your CV folder is correctly configured.").send()
-    await show_candidate_portal()
-
-
-@cl.action_callback("candidate_screen")
-async def on_candidate_screen(action: Action):
-    await cl.Message(
-        content=(
-            "### 🔍 AI Screening in Progress...\n\n"
-            "⏳ Analyzing CVs against the job requirements.\n"
-            "This takes **2–5 minutes** — please do not close this window.\n\n"
-            "_Comparing skills, experience, and technologies..._"
-        )
-    ).send()
-
-    messages = []
-    def cb(t): messages.append(t)
-
-    try:
-        results = await run_in_thread(run_screening, None, cb)
-        results.sort(key=lambda x: x["match_score"], reverse=True)
-        shortlisted = [r for r in results if r["status"] in ("shortlisted", "in_chat", "ready_for_hr")]
-        rejected    = [r for r in results if r["status"] == "rejected"]
-
-        table  = "### 📊 Screening Results\n\n"
-        table += (
-            f"| Metric | Value |\n"
-            f"|--------|-------|\n"
-            f"| Threshold | {SHORTLIST_THRESHOLD:.0%} |\n"
-            f"| ✅ Shortlisted | **{len(shortlisted)}** candidates |\n"
-            f"| ❌ Rejected | {len(rejected)} candidates |\n\n"
-        )
-        table += "---\n\n"
-        table += "| # | Candidate | Match Score | Gaps | Status |\n"
-        table += "|---|-----------|-------------|------|--------|\n"
-
-        for i, r in enumerate(results, 1):
-            medal = ["🥇", "🥈", "🥉"][i - 1] if i <= 3 else f"{i}."
-            table += (
-                f"| {medal} | `{r['candidate_id']}` "
-                f"| {score_bar(r['match_score'])} "
-                f"| {len(r['gaps'])} gap(s) "
-                f"| {status_badge(r['status'])} |\n"
-            )
-
-        top_names = ", ".join(f"`{r['candidate_id']}`" for r in shortlisted[:5]) or "_None_"
-        table += f"\n\n> 🏆 **Top candidates eligible for interview:** {top_names}"
-
-        await cl.Message(content=table).send()
-
-    except Exception as e:
-        await cl.Message(content=f"### ❌ Screening Failed\n\n`{e}`\n\nEnsure CVs have been submitted first.").send()
-
-    await show_candidate_portal()
-
-
-@cl.action_callback("candidate_chat")
-async def on_candidate_chat(action: Action):
-    all_candidates = get_all_candidates()
-    ranked = sorted(
-        [c for c in all_candidates.values() if c.get("status") in ("shortlisted", "in_chat")],
-        key=lambda x: x["match_score"],
-        reverse=True,
-    )[:5]
-
-    if not ranked:
-        await cl.Message(
-            content=(
-                "### ⚠️ No Shortlisted Candidates\n\n"
-                "There are no candidates available for interview yet.\n\n"
-                "Please run **🔍 AI Screening** first so that candidates can be evaluated and shortlisted."
-            )
-        ).send()
-        await show_candidate_portal()
-        return
-
-    lines = ["### 💬 Select a Candidate to Interview\n\n"]
-    lines.append("The following candidates have been shortlisted. Select one to begin the AI interview session:\n")
-    lines.append("| # | Name | ID | Score | Gaps |")
-    lines.append("|---|------|----|-------|------|")
-
-    actions = []
-    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
-    for i, c in enumerate(ranked, 1):
-        profile = c.get("profile_json", {})
-        name = profile.get("name", c["candidate_id"])
-        lines.append(
-            f"| {medals[i-1]} | **{name}** | `{c['candidate_id']}` "
-            f"| {score_bar(c['match_score'])} | {len(c.get('gaps', []))} |"
-        )
-        actions.append(Action(
-            name="select_candidate",
-            payload={"candidate_id": c["candidate_id"]},
-            label=f"{medals[i-1]} {name} — {c['match_score']:.0%}",
-        ))
-
-    actions.append(Action(name="back_candidate", payload={"a": "1"}, label="← Back"))
-    await cl.Message(content="\n".join(lines), actions=actions).send()
-
-
-@cl.action_callback("select_candidate")
-async def on_select_candidate(action: Action):
-    candidate_id = action.payload.get("candidate_id")
-    candidate = get_candidate(candidate_id)
-    if not candidate:
-        await cl.Message(content=f"### ❌ Not Found\n\nCandidate `{candidate_id}` could not be retrieved.").send()
-        return
-
+def _candidate_name(candidate: dict) -> str:
     profile = candidate.get("profile_json", {})
-    gaps    = [g for g in candidate.get("gaps", []) if g.get("status") != "answered"]
-    name    = profile.get("name", candidate_id)
-    skills  = (profile.get("skills", []) + profile.get("technologies", []))[:6]
+    if profile.get("name"):
+        return profile["name"]
+    fallback = candidate.get("candidate_id", "Candidate").replace("_", " ").strip()
+    return fallback.title()
 
-    await cl.Message(
-        content=(
-            f"### 🎯 Interview Session — {name}\n\n"
-            f"| Field | Value |\n"
-            f"|-------|-------|\n"
-            f"| 👤 Candidate | **{name}** |\n"
-            f"| 🆔 ID | `{candidate_id}` |\n"
-            f"| 📊 Current Score | **{candidate['match_score']:.0%}** |\n"
-            f"| 🛠️ Top Skills | {', '.join(skills) or 'N/A'} |\n"
-            f"| ❓ Questions | **{min(len(gaps), 3)}** gap-filling questions |\n\n"
-            f"---\n\n"
-            f"_The AI interviewer will now begin. Please answer each question in the chat._"
-        )
-    ).send()
+
+def _candidate_cv_path(candidate: dict | None) -> Path | None:
+    if not candidate:
+        return None
+
+    cv_dir = Path(CV_FOLDER).resolve()
+    source_file = candidate.get("source_file")
+    if source_file:
+        candidate_path = (cv_dir / source_file).resolve()
+        if candidate_path.is_file() and cv_dir in candidate_path.parents:
+            return candidate_path
+
+    normalized_id = _normalize_candidate_id(candidate.get("candidate_id", ""))
+    for pdf_path in cv_dir.glob("*.pdf"):
+        if _normalize_candidate_id(pdf_path.stem) == normalized_id:
+            return pdf_path.resolve()
+    return None
+
+
+def _ensure_candidate_profile(candidate: dict | None):
+    if not candidate:
+        return candidate
+
+    has_profile = bool(candidate.get("profile_json"))
+    has_preview = bool(candidate.get("preview"))
+    has_source = bool(candidate.get("source_file"))
+    if has_profile and has_preview and has_source:
+        return candidate
 
     try:
-        session = CandidateChatSession(candidate_id)
-        cl.user_session.set(SESSION_CHAT, session)
-        cl.user_session.set(SESSION_MODE, "chat")
-        opening = await run_in_thread(session.start)
-        await cl.Message(content=opening).send()
-    except Exception as e:
-        await cl.Message(content=f"### ❌ Could Not Start Interview\n\n`{e}`").send()
-        await show_candidate_portal()
+        from screening import build_candidate_profile, fetch_candidate_cv_context
+
+        source_file, cv_text = fetch_candidate_cv_context(candidate["candidate_id"])
+        if not cv_text:
+            return candidate
+
+        updates = {
+            "source_file": source_file or candidate.get("source_file", ""),
+            "preview": " ".join(cv_text.split())[:700].strip(),
+            "profile_json": build_candidate_profile(candidate["candidate_id"], cv_text, source_file),
+        }
+        update_candidate_fields(candidate["candidate_id"], updates)
+        return get_candidate(candidate["candidate_id"])
+    except Exception:
+        return candidate
 
 
-# ─── HR Dashboard ─────────────────────────────────────────────────────────────
+def _find_candidate_by_name(raw_name: str):
+    lookup = _normalize_candidate_name(raw_name)
+    if not lookup:
+        return None
 
-async def show_hr_login():
-    cl.user_session.set(SESSION_MODE, "hr_login")
-    await cl.Message(
-        content=(
-            "## 🔐 HR Admin Login\n\n"
-            "Please enter the **HR password** to access the recruitment dashboard.\n\n"
-            "> 🔑 Default password: `hr1234`\n\n"
-            "_Type your password and press Enter._"
+    candidates = sorted(get_all_candidates().values(), key=_sort_score, reverse=True)
+
+    def candidate_keys(candidate: dict) -> set[str]:
+        return {
+            key
+            for key in {
+                _normalize_candidate_name(_candidate_name(candidate)),
+                _normalize_candidate_name(candidate.get("candidate_id", "")),
+                _normalize_candidate_name(candidate.get("candidate_id", "").replace("_", " ")),
+            }
+            if key
+        }
+
+    for candidate in candidates:
+        if candidate.get("status") in ("shortlisted", "in_chat", "ready_for_hr") and lookup in candidate_keys(candidate):
+            return candidate
+
+    for candidate in candidates:
+        if lookup in candidate_keys(candidate):
+            return candidate
+
+    return None
+
+
+def _screening_score(candidate: dict):
+    score = candidate.get("screening_score")
+    if score is None:
+        score = candidate.get("match_score")
+    return score
+
+
+def _final_score(candidate: dict):
+    score = candidate.get("final_score")
+    if score is None:
+        score = _screening_score(candidate)
+    return score
+
+
+def _sort_score(candidate: dict) -> float:
+    return float(_final_score(candidate) or 0.0)
+
+
+def _status_label(status: str) -> str:
+    labels = {
+        "pending": "Pending",
+        "shortlisted": "Shortlisted",
+        "in_chat": "Interview in Progress",
+        "ready_for_hr": "Review Ready",
+        "rejected": "Rejected",
+    }
+    return labels.get(status, status.replace("_", " ").title())
+
+
+def _score_label(score) -> str:
+    if score is None:
+        return "N/A"
+    return f"{round(float(score) * 100)}%"
+
+
+def _candidate_safe_message(content: str):
+    if not content:
+        return None
+
+    if "Internal HR Summary" in content:
+        return (
+            "Thank you - your pre-screening is complete.\n\n"
+            "Your answers have been saved for the recruiting team."
         )
-    ).send()
+
+    cleaned_lines = []
+    for line in content.splitlines():
+        if "Score updated" in line or "Initial Score" in line or "Final Score" in line:
+            continue
+        if line.strip().startswith("### Internal HR Summary"):
+            continue
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines).strip()
+    return cleaned or None
 
 
-async def show_hr_dashboard():
-    cl.user_session.set(SESSION_MODE, "hr_dashboard")
-    all_candidates = get_all_candidates()
+def _candidate_messages(candidate_id: str) -> list[dict]:
+    visible_messages = []
+    for message in get_chat_history(candidate_id):
+        safe_content = _candidate_safe_message(message.get("content", ""))
+        if safe_content:
+            visible_messages.append(
+                {
+                    "role": message.get("role", "assistant"),
+                    "content": safe_content,
+                    "timestamp": message.get("timestamp"),
+                }
+            )
+    return visible_messages
 
-    if not all_candidates:
-        await cl.Message(
-            content=(
-                "## 🏠 HR Dashboard\n\n"
-                "### ⚠️ No Data Available\n\n"
-                "No candidates have been processed yet. Ask candidates to submit their CVs and run the AI screening first."
-            ),
-            actions=[
-                Action(name="hr_refresh",   payload={"a": "1"}, label="🔄 Refresh"),
-                Action(name="back_landing", payload={"a": "1"}, label="← Logout"),
-            ]
-        ).send()
-        return
 
-    ranked       = sorted(all_candidates.values(), key=lambda x: x.get("final_score", x.get("match_score", 0)), reverse=True)
-    ready_for_hr = [c for c in ranked if c.get("status") == "ready_for_hr"]
-    shortlisted  = [c for c in ranked if c.get("status") in ("shortlisted", "in_chat")]
-    rejected     = [c for c in ranked if c.get("status") == "rejected"]
-    top3         = (ready_for_hr + shortlisted)[:3]
-    medals       = ["🥇", "🥈", "🥉"]
-
-    lines = ["# 🏢 HR Recruitment Dashboard\n"]
-
-    # ── Overview stats ──
-    lines.append(
-        f"| 📋 Total | ✅ Ready for HR | 🔵 Shortlisted | 🔴 Rejected |\n"
-        f"|---------|----------------|----------------|-------------|\n"
-        f"| **{len(all_candidates)}** | **{len(ready_for_hr)}** | **{len(shortlisted)}** | **{len(rejected)}** |\n"
+def _eligible_candidates() -> list[dict]:
+    candidates = list(get_all_candidates().values())
+    return sorted(
+        [c for c in candidates if c.get("status") in ("shortlisted", "in_chat", "ready_for_hr")],
+        key=_sort_score,
+        reverse=True,
     )
 
-    lines.append("---\n")
 
-    # ── Top 3 ──
-    lines.append("## 🏆 Top Candidates — Recommended for Final Interview\n")
-    if top3:
-        lines.append("| Rank | Name | Final Score | Interview | Status |")
-        lines.append("|------|------|-------------|-----------|--------|")
-        for i, c in enumerate(top3):
-            profile     = c.get("profile_json", {})
-            name        = profile.get("name", c["candidate_id"])
-            score       = c.get("final_score", c.get("match_score", 0))
-            interviewed = "✅ Completed" if c.get("status") == "ready_for_hr" else "⏳ Pending"
-            lines.append(
-                f"| {medals[i]} | **{name}** | {score_bar(score)} | {interviewed} | {status_badge(c['status'])} |"
-            )
-    else:
-        lines.append("_No candidates are ready yet. Run screening and interviews first._\n")
+def _candidate_dashboard_payload(candidate_id: str) -> dict:
+    candidate = get_candidate(candidate_id)
+    unanswered = [g for g in candidate.get("gaps", []) if g.get("status") != "answered"]
+    answered = [g for g in candidate.get("gaps", []) if g.get("status") == "answered"]
+    browser_key = _browser_session_key()
+    active_session = ACTIVE_CHAT_SESSIONS.get(browser_key)
+    chat_active = bool(active_session and active_session.candidate_id == candidate_id)
 
-    lines.append("\n---\n")
-
-    # ── Detailed cards ──
-    if ready_for_hr:
-        lines.append("## 📋 Interview Summaries\n")
-        for c in ready_for_hr[:3]:
-            profile  = c.get("profile_json", {})
-            name     = profile.get("name", c["candidate_id"])
-            initial  = c.get("match_score", 0)
-            final    = c.get("final_score", initial)
-            delta    = final - initial
-            delta_s  = (f"📈 +{delta:.2f}" if delta > 0 else f"📉 {delta:.2f}") if delta != 0 else "➡️ unchanged"
-            skills   = (profile.get("skills", []) + profile.get("technologies", []))[:6]
-            answered = [g for g in c.get("gaps", []) if g.get("status") == "answered"]
-
-            lines.append(f"### {'🥇' if c == top3[0] else '👤'} {name} — `{c['candidate_id']}`\n")
-            lines.append(
-                f"| Field | Value |\n"
-                f"|-------|-------|\n"
-                f"| 📊 Initial Score | {initial:.0%} |\n"
-                f"| 🎯 Final Score | **{final:.0%}** ({delta_s}) |\n"
-                f"| 🛠️ Top Skills | {', '.join(skills)} |\n"
-                f"| 💼 Experience | {profile.get('years_of_experience', 'N/A')} years |\n"
-            )
-
-            if answered:
-                lines.append("\n**Interview Q&A**\n")
-                for g in answered:
-                    lines.append(f"> ❓ **Q:** {g.get('requirement', '')}")
-                    lines.append(f"> 💬 **A:** {g.get('answer', '_No answer recorded_')}\n")
-
-            lines.append("\n---\n")
-
-    # ── All candidates ──
-    lines.append("## 📊 All Candidates\n")
-    lines.append("| # | Candidate | Final Score | Status | Interviewed |")
-    lines.append("|---|-----------|-------------|--------|-------------|")
-    for i, c in enumerate(ranked, 1):
-        profile      = c.get("profile_json", {})
-        name         = profile.get("name", c["candidate_id"])
-        score        = c.get("final_score", c.get("match_score", 0))
-        interviewed  = "✅" if c.get("status") == "ready_for_hr" else "—"
-        lines.append(
-            f"| {i} | **{name}** | {score_bar(score)} | {status_badge(c['status'])} | {interviewed} |"
-        )
-
-    await cl.Message(
-        content="\n".join(lines),
-        actions=[
-            Action(name="hr_refresh",   payload={"a": "1"}, label="🔄 Refresh Dashboard"),
-            Action(name="back_landing", payload={"a": "1"}, label="← Logout"),
-        ]
-    ).send()
+    return {
+        "candidate": candidate,
+        "candidate_name": _candidate_name(candidate),
+        "status_label": _status_label(candidate.get("status", "pending")),
+        "messages": _candidate_messages(candidate_id),
+        "answered_count": len(answered),
+        "remaining_count": min(len(unanswered), 3),
+        "can_interview": candidate.get("status") in ("shortlisted", "in_chat"),
+        "interview_complete": candidate.get("status") == "ready_for_hr" or not unanswered,
+        "chat_active": chat_active,
+        "question_limit": 3,
+    }
 
 
-@cl.action_callback("role_hr")
-async def on_role_hr(action: Action):
-    cl.user_session.set(SESSION_ROLE, "hr")
-    await show_hr_login()
+def candidate_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        candidate_id = session.get("candidate_id")
+        if not candidate_id or not get_candidate(candidate_id):
+            flash("Please identify yourself as a candidate first.", "error")
+            return redirect(url_for("landing", role="candidate"))
+        return fn(*args, **kwargs)
+
+    return wrapper
 
 
-@cl.action_callback("hr_refresh")
-async def on_hr_refresh(action: Action):
-    await show_hr_dashboard()
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not session.get("admin_authenticated"):
+            flash("Please sign in as admin to access the dashboard.", "error")
+            return redirect(url_for("landing", role="admin"))
+        return fn(*args, **kwargs)
+
+    return wrapper
 
 
-@cl.action_callback("back_landing")
-async def on_back_landing(action: Action):
-    await show_landing()
+@app.context_processor
+def inject_helpers():
+    return {
+        "score_label": _score_label,
+        "status_label": _status_label,
+        "candidate_name": _candidate_name,
+    }
 
 
-@cl.action_callback("back_candidate")
-async def on_back_candidate(action: Action):
-    await show_candidate_portal()
+@app.route("/")
+def landing():
+    return render_template(
+        "landing.html",
+        active_role=request.args.get("role", "candidate"),
+        candidate_name_value=request.args.get("name", ""),
+    )
 
 
-# ─── Lifecycle ────────────────────────────────────────────────────────────────
+@app.route("/candidate/login", methods=["GET", "POST"])
+def candidate_login():
+    if request.method == "GET":
+        return redirect(url_for("landing", role="candidate", name=request.args.get("name", "")))
 
-@cl.on_chat_start
-async def on_start():
-    await show_landing()
+    if request.method == "POST":
+        raw_name = request.form.get("candidate_name", "")
+        candidate = _find_candidate_by_name(raw_name)
+
+        if not candidate:
+            flash("Candidate name not found. Please enter the same name used for the application.", "error")
+            return redirect(url_for("landing", role="candidate", name=raw_name))
+
+        if candidate.get("status") == "pending":
+            flash("Your application has not been screened yet. Please come back after the admin runs screening.", "error")
+            return redirect(url_for("landing", role="candidate", name=raw_name))
+
+        session["candidate_id"] = candidate["candidate_id"]
+        session.pop("admin_authenticated", None)
+        return redirect(url_for("candidate_portal"))
 
 
-@cl.on_message
-async def on_message(message: cl.Message):
-    mode = cl.user_session.get(SESSION_MODE, "landing")
-    text = message.content.strip()
+@app.route("/candidate")
+@candidate_required
+def candidate_portal():
+    payload = _candidate_dashboard_payload(session["candidate_id"])
+    return render_template("candidate_portal.html", **payload)
 
-    # ── HR Login ──────────────────────────────────────────────────────────────
-    if mode == "hr_login":
-        if text == HR_PASSWORD:
-            await cl.Message(content="### ✅ Access Granted\n\nWelcome back. Loading your dashboard...").send()
-            await show_hr_dashboard()
-        else:
-            await cl.Message(
-                content=(
-                    "### ❌ Incorrect Password\n\n"
-                    "That password is incorrect. Please try again.\n\n"
-                    "> 💡 Hint: default is `hr1234`"
-                )
-            ).send()
-        return
 
-    # ── Candidate Chat ────────────────────────────────────────────────────────
-    if mode == "chat":
-        session: CandidateChatSession = cl.user_session.get(SESSION_CHAT)
-        if not session:
-            await cl.Message(content="### ❌ Session Expired\n\nYour session was lost. Please start a new interview.").send()
-            await show_candidate_portal()
-            return
+@app.post("/candidate/start")
+@candidate_required
+def candidate_start():
+    candidate_id = session["candidate_id"]
+    candidate = get_candidate(candidate_id)
+    unanswered = [g for g in candidate.get("gaps", []) if g.get("status") != "answered"]
 
-        async with cl.Step(name="🤖 AI Interviewer is thinking..."):
-            response = await run_in_thread(session.handle_answer, text)
+    if candidate.get("status") not in ("shortlisted", "in_chat"):
+        flash("This interview is not available right now.", "error")
+        return redirect(url_for("candidate_portal"))
 
-        await cl.Message(content=response).send()
+    if not unanswered:
+        flash("Your pre-screening has already been completed.", "info")
+        return redirect(url_for("candidate_portal"))
 
-        if "Pre-screening complete" in response:
-            cl.user_session.set(SESSION_MODE, "candidate_menu")
-            await cl.Message(
-                content=(
-                    "---\n\n"
-                    "### ✅ Interview Recorded\n\n"
-                    "Your responses have been saved. Our HR team will review your profile within 3–5 business days.\n\n"
-                    "_What would you like to do next?_"
-                ),
-                actions=[
-                    Action(name="candidate_chat", payload={"a": "1"}, label="💬 Interview Another Candidate"),
-                    Action(name="back_landing",   payload={"a": "1"}, label="← Main Menu"),
-                ]
-            ).send()
-        return
+    browser_key = _browser_session_key()
+    chat_session = CandidateChatSession(candidate_id)
+    chat_session.start()
+    ACTIVE_CHAT_SESSIONS[browser_key] = chat_session
+    flash("Your interview has started. Answer the question below.", "success")
+    return redirect(url_for("candidate_portal"))
 
-    # ── Default ───────────────────────────────────────────────────────────────
-    await cl.Message(
-        content="👆 Please use the **buttons above** to navigate the platform."
-    ).send()
+
+@app.post("/candidate/message")
+@candidate_required
+def candidate_message():
+    answer = (request.form.get("answer") or "").strip()
+    if not answer:
+        flash("Please enter an answer before sending.", "error")
+        return redirect(url_for("candidate_portal"))
+
+    browser_key = _browser_session_key()
+    chat_session = ACTIVE_CHAT_SESSIONS.get(browser_key)
+
+    if not chat_session or chat_session.candidate_id != session["candidate_id"]:
+        flash("The interview session expired. Please start or resume it again.", "error")
+        return redirect(url_for("candidate_portal"))
+
+    response = chat_session.handle_answer(answer)
+    if "Pre-screening complete" in response:
+        ACTIVE_CHAT_SESSIONS.pop(browser_key, None)
+        flash("Your interview is complete. Thank you.", "success")
+
+    return redirect(url_for("candidate_portal"))
+
+
+@app.post("/candidate/logout")
+@candidate_required
+def candidate_logout():
+    ACTIVE_CHAT_SESSIONS.pop(_browser_session_key(), None)
+    session.pop("candidate_id", None)
+    flash("You have been signed out of the candidate portal.", "info")
+    return redirect(url_for("landing"))
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "GET":
+        return redirect(url_for("landing", role="admin"))
+
+    if request.method == "POST":
+        if request.form.get("password") == ADMIN_PASSWORD:
+            session["admin_authenticated"] = True
+            session.pop("candidate_id", None)
+            flash("Admin access granted.", "success")
+            return redirect(url_for("admin_dashboard"))
+
+        flash("Incorrect admin password.", "error")
+        return redirect(url_for("landing", role="admin"))
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    browser_key = _browser_session_key()
+    all_candidates = sorted(get_all_candidates().values(), key=_sort_score, reverse=True)
+    selected_candidate_id = request.args.get("candidate_id") or (all_candidates[0]["candidate_id"] if all_candidates else None)
+    selected_candidate = get_candidate(selected_candidate_id) if selected_candidate_id else None
+    selected_candidate = _ensure_candidate_profile(selected_candidate)
+
+    shortlisted = [c for c in all_candidates if c.get("status") in ("shortlisted", "in_chat")]
+    ready = [c for c in all_candidates if c.get("status") == "ready_for_hr"]
+    rejected = [c for c in all_candidates if c.get("status") == "rejected"]
+
+    return render_template(
+        "admin_dashboard.html",
+        candidates=all_candidates,
+        selected_candidate=selected_candidate,
+        selected_candidate_name=_candidate_name(selected_candidate) if selected_candidate else None,
+        selected_messages=get_chat_history(selected_candidate_id) if selected_candidate_id else [],
+        stats={
+            "total": len(all_candidates),
+            "shortlisted": len(shortlisted),
+            "ready": len(ready),
+            "rejected": len(rejected),
+            "threshold": f"{round(SHORTLIST_THRESHOLD * 100)}%",
+        },
+        screening_score=_screening_score,
+        final_score=_final_score,
+        candidate_name=_candidate_name,
+        admin_logs=ADMIN_PIPELINE_LOGS.get(browser_key, []),
+        job_description=JOB_DESCRIPTION.strip(),
+    )
+
+
+@app.get("/admin/cv/<candidate_id>")
+@admin_required
+def admin_candidate_cv(candidate_id: str):
+    candidate = get_candidate(candidate_id)
+    if not candidate:
+        abort(404)
+
+    candidate = _ensure_candidate_profile(candidate)
+    cv_path = _candidate_cv_path(candidate)
+    if not cv_path or not cv_path.exists():
+        abort(404)
+
+    return send_file(cv_path, mimetype="application/pdf", as_attachment=False, download_name=cv_path.name)
+
+
+@app.post("/admin/ingest")
+@admin_required
+def admin_ingest():
+    from ingest import ingest_cvs
+
+    browser_key = _browser_session_key()
+    logs = []
+
+    def callback(message: str):
+        logs.append(message)
+
+    try:
+        ingested = ingest_cvs(progress_callback=callback)
+        flash(f"Ingestion finished. {len(ingested)} candidate CV(s) were indexed.", "success")
+    except Exception as exc:
+        flash(f"Ingestion failed: {exc}", "error")
+
+    ADMIN_PIPELINE_LOGS[browser_key] = logs
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.post("/admin/screen")
+@admin_required
+def admin_screen():
+    from screening import run_screening
+
+    browser_key = _browser_session_key()
+    logs = []
+
+    def callback(message: str):
+        logs.append(message)
+
+    try:
+        results = run_screening(progress_callback=callback)
+        flash(f"Screening finished. {len(results)} candidate record(s) were updated.", "success")
+    except Exception as exc:
+        flash(f"Screening failed: {exc}", "error")
+
+    ADMIN_PIPELINE_LOGS[browser_key] = logs
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.post("/admin/logout")
+@admin_required
+def admin_logout():
+    ADMIN_PIPELINE_LOGS.pop(_browser_session_key(), None)
+    session.pop("admin_authenticated", None)
+    flash("Admin session closed.", "info")
+    return redirect(url_for("landing"))
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)

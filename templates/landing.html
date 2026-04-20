@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set title = "TalentScout Login" %}
+{% block content %}
+  <div class="auth-stage">
+    <section class="panel auth-shell">
+      <h1 style="text-align:center; margin-bottom: 22px;">TalentScout</h1>
+
+      <div class="auth-tabs" style="justify-content:center;">
+        <a
+          href="{{ url_for('landing', role='candidate', name=candidate_name_value) }}"
+          class="{% if active_role != 'admin' %}active{% endif %}"
+        >
+          Candidate
+        </a>
+        <a
+          href="{{ url_for('landing', role='admin') }}"
+          class="{% if active_role == 'admin' %}active{% endif %}"
+        >
+          Admin
+        </a>
+      </div>
+
+      <section class="subpanel login-card">
+        {% if active_role == 'admin' %}
+          <h2>Admin Sign In</h2>
+          <form method="post" action="{{ url_for('admin_login') }}">
+            <div>
+              <label for="password">Password</label>
+              <input id="password" name="password" type="password" placeholder="Password" autocomplete="current-password">
+            </div>
+            <div class="actions">
+              <button type="submit">Sign In</button>
+            </div>
+          </form>
+        {% else %}
+          <h2>Candidate Sign In</h2>
+          <form method="post" action="{{ url_for('candidate_login') }}">
+            <div>
+              <label for="candidate_name">Full name</label>
+              <input
+                id="candidate_name"
+                name="candidate_name"
+                type="text"
+                placeholder="Full name"
+                value="{{ candidate_name_value }}"
+                autocomplete="name"
+              >
+            </div>
+            <div class="actions">
+              <button type="submit">Continue</button>
+            </div>
+          </form>
+        {% endif %}
+      </section>
+    </section>
+  </div>
+{% endblock %}

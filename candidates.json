@@ -1,68 +1,977 @@
 {
   "alice_johnson": {
     "candidate_id": "alice_johnson",
-    "source_file": "Alice_Johnson.pdf",
     "namespace": "__default__",
-    "chunks": 3,
-    "ingested_at": "2026-03-03T18:33:48.812702Z",
-    "preview": "Alice Johnson\n alice.johnson@email.com | +1 (312) 555-0101 | github.com/alicejohnson | Chicago, IL\nPROFESSIONAL SUMMARY\nPython backend developer with 6 years of experience building REST APIs and data-driven applications. Strong\nbackground in FastAPI and Django, with solid experience deploying on AWS. Looking to grow into larger-scale\ndistributed systems and cloud-native architecture.\nWORK EXPERIENCE\nSenior Backend Developer — TechCorp Solutions\nMar 2020 – Present | Chicago, IL\n Built and mainta",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
+    "match_score": 0.7446,
+    "screening_score": 0.7446,
+    "final_score": null,
+    "status": "shortlisted",
+    "gaps": [
+      {
+        "requirement": "TDD",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Microservices",
+        "severity": "important",
+        "weight": 0.75,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Message queue experience (RabbitMQ or Kafka)",
+        "severity": "important",
+        "weight": 0.75,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      }
+    ],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6447,
+      "requirement_coverage": 0.8,
+      "seniority_match": 1.0,
+      "max": 0.671392441,
+      "avg_top": 0.640387266,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [],
+          "evidence": "CV indicates 6 years of experience."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Python"
+          ],
+          "evidence": "Found evidence for: Python."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "FastAPI",
+            "Django",
+            "Flask"
+          ],
+          "evidence": "Found evidence for: FastAPI, Django, Flask."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "REST APIs"
+          ],
+          "evidence": "Found evidence for: REST APIs."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Redis"
+          ],
+          "evidence": "Found evidence for: Redis."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Docker"
+          ],
+          "evidence": "Found evidence for: Docker."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Kubernetes"
+          ],
+          "evidence": "Found evidence for: Kubernetes."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "AWS"
+          ],
+          "evidence": "Found evidence for: AWS."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.6714,
+      0.6596,
+      0.5902
+    ],
+    "created_at": "2026-04-20T10:06:38.069839",
+    "updated_at": "2026-04-20T10:06:38.069864",
+    "source_file": "Alice_Johnson.pdf",
+    "preview": "Alice Johnson alice.johnson@email.com | +1 (312) 555-0101 | github.com/alicejohnson | Chicago, IL PROFESSIONAL SUMMARY Python backend developer with 6 years of experience building REST APIs and data-driven applications. Strong background in FastAPI and Django, with solid experience deploying on AWS. Looking to grow into larger-scale distributed systems and cloud-native architecture. WORK EXPERIENCE Senior Backend Developer \u2014 TechCorp Solutions Mar 2020 \u2013 Present | Chicago, IL \u007f Built and maintained REST APIs using FastAPI serving 5M+ requests/day. \u007f Managed PostgreSQL databases including schema design, indexing, and query optimization. \u007f Used Redis for session caching and rate limiting. \u007f De",
+    "profile_json": {
+      "name": "Alice Johnson",
+      "years_of_experience": 6,
+      "skills": [
+        "Python",
+        "FastAPI",
+        "Django",
+        "Flask",
+        "REST APIs",
+        "AWS",
+        "Docker",
+        "Kubernetes",
+        "Terraform",
+        "MySQL"
+      ],
+      "past_roles": [
+        "distributed systems and cloud-native architecture.",
+        "Senior Backend Developer \u2014 TechCorp Solutions",
+        "Python Developer \u2014 RetailSoft",
+        "\u007f Developed e-commerce backend APIs with Django REST Framework."
+      ],
+      "education": [
+        "B.Sc. Computer Science",
+        "University of Illinois Chicago \u2014 2018"
+      ],
+      "summary": "6+ years of experience mentioned. recent roles include distributed systems and cloud-native architecture., Senior Backend Developer \u2014 TechCorp Solutions. skills include Python, FastAPI, Django, Flask, REST APIs.",
+      "source_file": "Alice_Johnson.pdf",
+      "cv_excerpt": "Alice Johnson alice.johnson@email.com | +1 (312) 555-0101 | github.com/alicejohnson | Chicago, IL PROFESSIONAL SUMMARY Python backend developer with 6 years of experience building REST APIs and data-driven applications. Strong background in FastAPI and Django, with solid experience deploying on AWS. Looking to grow into larger-scale distributed systems and cloud-native architecture. WORK EXPERIENCE Senior Backend Dev"
+    }
   },
   "bob_martinez": {
     "candidate_id": "bob_martinez",
-    "source_file": "Bob_Martinez.pdf",
     "namespace": "__default__",
-    "chunks": 2,
-    "ingested_at": "2026-03-03T18:33:49.999391Z",
-    "preview": "Bob Martinez\n bob.martinez@email.com | +1 (305) 555-0404 | Miami, FL\nPROFESSIONAL SUMMARY\nFrontend-focused developer with 4 years of experience in React and JavaScript ecosystems. Some Python\nscripting experience for automation tasks. Seeking to transition toward backend development roles.\nWORK EXPERIENCE\nFrontend Developer — CreativeAgency\nJun 2020 – Present | Miami, FL\n Built responsive web applications using React, TypeScript, and Redux.\n Wrote Python scripts for data scraping and automatio",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
+    "match_score": 0.6044,
+    "screening_score": 0.6044,
+    "final_score": null,
+    "status": "shortlisted",
+    "gaps": [
+      {
+        "requirement": "5+ years of relevant experience",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "CV indicates 4 years vs required 5.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Redis",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "CI/CD tooling (GitHub Actions, GitLab CI, or Jenkins)",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "CI/CD",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Testing",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      }
+    ],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6604,
+      "requirement_coverage": 0.404,
+      "seniority_match": 0.8,
+      "max": 0.662435293,
+      "avg_top": 0.660166621,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": false,
+          "score": 0.8,
+          "matched_terms": [],
+          "evidence": "CV indicates 4 years vs required 5."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Python"
+          ],
+          "evidence": "Found evidence for: Python."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Flask"
+          ],
+          "evidence": "Found evidence for: Flask."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "REST APIs"
+          ],
+          "evidence": "Found evidence for: REST APIs."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Docker"
+          ],
+          "evidence": "Found evidence for: Docker."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "AWS"
+          ],
+          "evidence": "Found evidence for: AWS."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.6624,
+      0.6579
+    ],
+    "created_at": "2026-04-20T10:06:40.041455",
+    "updated_at": "2026-04-20T10:06:40.041486",
+    "source_file": "Bob_Martinez.pdf",
+    "preview": "Bob Martinez bob.martinez@email.com | +1 (305) 555-0404 | Miami, FL PROFESSIONAL SUMMARY Frontend-focused developer with 4 years of experience in React and JavaScript ecosystems. Some Python scripting experience for automation tasks. Seeking to transition toward backend development roles. WORK EXPERIENCE Frontend Developer \u2014 CreativeAgency Jun 2020 \u2013 Present | Miami, FL \u007f Built responsive web applications using React, TypeScript, and Redux. \u007f Wrote Python scripts for data scraping and automation (BeautifulSoup, requests). \u007f Consumed REST APIs built by backend team. \u007f Basic MySQL queries for internal dashboards. Junior Web Developer \u2014 LocalBiz Websites Sep 2018 \u2013 May 2020 | Miami, FL \u007f Develo",
+    "profile_json": {
+      "name": "Bob Martinez",
+      "years_of_experience": 4,
+      "skills": [
+        "Python",
+        "Flask",
+        "REST APIs",
+        "AWS",
+        "Docker",
+        "MySQL",
+        "React",
+        "TypeScript",
+        "Node.js"
+      ],
+      "past_roles": [
+        "Frontend Developer \u2014 CreativeAgency",
+        "\u007f Consumed REST APIs built by backend team.",
+        "\u007f Basic MySQL queries for internal dashboards.",
+        "Junior Web Developer \u2014 LocalBiz Websites"
+      ],
+      "education": [
+        "Florida International University \u2014 2018"
+      ],
+      "summary": "4+ years of experience mentioned. recent roles include Frontend Developer \u2014 CreativeAgency, \u007f Consumed REST APIs built by backend team.. skills include Python, Flask, REST APIs, AWS, Docker.",
+      "source_file": "Bob_Martinez.pdf",
+      "cv_excerpt": "Bob Martinez bob.martinez@email.com | +1 (305) 555-0404 | Miami, FL PROFESSIONAL SUMMARY Frontend-focused developer with 4 years of experience in React and JavaScript ecosystems. Some Python scripting experience for automation tasks. Seeking to transition toward backend development roles. WORK EXPERIENCE Frontend Developer \u2014 CreativeAgency Jun 2020 \u2013 Present | Miami, FL \u007f Built responsive web applications using React"
+    }
   },
   "carol_white": {
     "candidate_id": "carol_white",
-    "source_file": "Carol_White.pdf",
     "namespace": "__default__",
-    "chunks": 4,
-    "ingested_at": "2026-03-03T18:33:51.664808Z",
-    "preview": "Carol White\n carol.white@email.com | +1 (415) 555-0303 | linkedin.com/in/carolwhite | San Francisco, CA\nPROFESSIONAL SUMMARY\nSenior Python Backend Engineer with 8 years of experience designing and scaling distributed systems. Deep\nexpertise in FastAPI, microservices architecture, and cloud infrastructure on GCP and AWS. Passionate about\nTDD, clean code, and building reliable data pipelines that serve millions of users.\nWORK EXPERIENCE\nLead Backend Engineer — DataSystems Inc.\nJan 2020 – Present |",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
+    "match_score": 0.8198,
+    "screening_score": 0.8198,
+    "final_score": null,
+    "status": "shortlisted",
+    "gaps": [],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6723,
+      "requirement_coverage": 1.0,
+      "seniority_match": 1.0,
+      "max": 0.761823297,
+      "avg_top": 0.6562812625000001,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [],
+          "evidence": "CV indicates 8 years of experience."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Python"
+          ],
+          "evidence": "Found evidence for: Python."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "FastAPI",
+            "Django",
+            "Flask"
+          ],
+          "evidence": "Found evidence for: FastAPI, Django, Flask."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "REST APIs"
+          ],
+          "evidence": "Found evidence for: REST APIs."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Redis"
+          ],
+          "evidence": "Found evidence for: Redis."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Docker"
+          ],
+          "evidence": "Found evidence for: Docker."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Kubernetes"
+          ],
+          "evidence": "Found evidence for: Kubernetes."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "AWS",
+            "GCP"
+          ],
+          "evidence": "Found evidence for: AWS, GCP."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.7618,
+      0.7043,
+      0.6468,
+      0.5122
+    ],
+    "created_at": "2026-04-20T10:06:42.038559",
+    "updated_at": "2026-04-20T10:06:42.038585",
+    "source_file": "Carol_White.pdf",
+    "preview": "Carol White carol.white@email.com | +1 (415) 555-0303 | linkedin.com/in/carolwhite | San Francisco, CA PROFESSIONAL SUMMARY Senior Python Backend Engineer with 8 years of experience designing and scaling distributed systems. Deep expertise in FastAPI, microservices architecture, and cloud infrastructure on GCP and AWS. Passionate about TDD, clean code, and building reliable data pipelines that serve millions of users. WORK EXPERIENCE Lead Backend Engineer \u2014 DataSystems Inc. Jan 2020 \u2013 Present | San Francisco, CA \u007f Architected Python microservices platform using FastAPI, handling 50M+ requests/day. \u007f Led migration from monolith to Kubernetes-orchestrated containers on GCP (GKE). \u007f Designed ev",
+    "profile_json": {
+      "name": "Carol White",
+      "years_of_experience": 8,
+      "skills": [
+        "Python",
+        "FastAPI",
+        "Django",
+        "Flask",
+        "REST APIs",
+        "AWS",
+        "GCP",
+        "Docker",
+        "Kubernetes",
+        "Terraform"
+      ],
+      "past_roles": [
+        "Lead Backend Engineer \u2014 DataSystems Inc.",
+        "Software Engineer \u2014 CloudBase Technologies",
+        "Junior Python Developer \u2014 StartupLab",
+        "\u007f Developed backend services in Python/Flask for a SaaS analytics product."
+      ],
+      "education": [
+        "M.Sc. Software Engineering",
+        "Stanford University \u2014 2015"
+      ],
+      "summary": "8+ years of experience mentioned. recent roles include Lead Backend Engineer \u2014 DataSystems Inc., Software Engineer \u2014 CloudBase Technologies. skills include Python, FastAPI, Django, Flask, REST APIs.",
+      "source_file": "Carol_White.pdf",
+      "cv_excerpt": "Carol White carol.white@email.com | +1 (415) 555-0303 | linkedin.com/in/carolwhite | San Francisco, CA PROFESSIONAL SUMMARY Senior Python Backend Engineer with 8 years of experience designing and scaling distributed systems. Deep expertise in FastAPI, microservices architecture, and cloud infrastructure on GCP and AWS. Passionate about TDD, clean code, and building reliable data pipelines that serve millions of users"
+    }
   },
   "david_chen": {
     "candidate_id": "david_chen",
+    "namespace": "__default__",
+    "match_score": 0.7581,
+    "screening_score": 0.7581,
+    "final_score": 0.7581,
+    "status": "in_chat",
+    "gaps": [
+      {
+        "requirement": "TDD",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "REST APIs",
+        "severity": "important",
+        "weight": 0.75,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Message queue experience (RabbitMQ or Kafka)",
+        "severity": "important",
+        "weight": 0.75,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      }
+    ],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6693,
+      "requirement_coverage": 0.8,
+      "seniority_match": 1.0,
+      "max": 0.726839125,
+      "avg_top": 0.6642523405,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [],
+          "evidence": "CV indicates 5 years of experience."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Python"
+          ],
+          "evidence": "Found evidence for: Python."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Django",
+            "Flask"
+          ],
+          "evidence": "Found evidence for: Django, Flask."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Redis"
+          ],
+          "evidence": "Found evidence for: Redis."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Docker"
+          ],
+          "evidence": "Found evidence for: Docker."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Kubernetes"
+          ],
+          "evidence": "Found evidence for: Kubernetes."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "AWS"
+          ],
+          "evidence": "Found evidence for: AWS."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.7268,
+      0.6017
+    ],
+    "created_at": "2026-04-20T10:06:43.894787",
+    "updated_at": "2026-04-20T10:07:19.993976",
     "source_file": "David_Chen.pdf",
-    "namespace": "__default__",
-    "chunks": 2,
-    "ingested_at": "2026-03-03T18:33:52.733955Z",
-    "preview": "David Chen\n david.chen@email.com | +1 (646) 555-0202 | New York, NY\nPROFESSIONAL SUMMARY\nFull-stack developer with 5 years of experience primarily in Node.js and Python. Backend-leaning with growing\nexperience in cloud deployments and containerization. Strong communicator and fast learner transitioning\ntoward pure Python backend roles.\nWORK EXPERIENCE\nFull Stack Developer — FinTech Startup\nApr 2021 – Present | New York, NY\n Built microservices in Python (Flask) and Node.js for a payments platfo",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
-  },
-  "sara_patel": {
-    "candidate_id": "sara_patel",
-    "source_file": "Sara_Patel.pdf",
-    "namespace": "__default__",
-    "chunks": 3,
-    "ingested_at": "2026-03-03T18:33:55.634240Z",
-    "preview": "Sara Patel\n sara.patel@email.com | +44 7911 555 0505 | London, UK | github.com/sarapatel\nPROFESSIONAL SUMMARY\nBackend engineer with 7 years of Python experience specialising in high-throughput APIs, event-driven\narchitectures, and cloud-native systems. Experienced across AWS and Azure, with a strong focus on\nobservability, performance, and engineering best practices.\nWORK EXPERIENCE\nSenior Software Engineer – Backend — GlobalPay Ltd.\nFeb 2019 – Present | London, UK\n Designed and owned Python mi",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
+    "preview": "David Chen david.chen@email.com | +1 (646) 555-0202 | New York, NY PROFESSIONAL SUMMARY Full-stack developer with 5 years of experience primarily in Node.js and Python. Backend-leaning with growing experience in cloud deployments and containerization. Strong communicator and fast learner transitioning toward pure Python backend roles. WORK EXPERIENCE Full Stack Developer \u2014 FinTech Startup Apr 2021 \u2013 Present | New York, NY \u007f Built microservices in Python (Flask) and Node.js for a payments platform. \u007f Used PostgreSQL for transactional data and Redis for caching. \u007f Deployed applications on AWS using Docker containers. \u007f Wrote basic CI/CD scripts in GitHub Actions. \u007f Limited experience with Kube",
+    "profile_json": {
+      "name": "David Chen",
+      "years_of_experience": 5,
+      "skills": [
+        "Python",
+        "Django",
+        "Flask",
+        "AWS",
+        "Docker",
+        "Kubernetes",
+        "MySQL",
+        "MongoDB",
+        "Redis",
+        "CI/CD"
+      ],
+      "past_roles": [
+        "toward pure Python backend roles.",
+        "Full Stack Developer \u2014 FinTech Startup",
+        "Backend Developer \u2014 MediaGroup Inc.",
+        "B.Eng. Software Engineering"
+      ],
+      "education": [
+        "B.Eng. Software Engineering",
+        "NYU Tandon School of Engineering \u2014 2019"
+      ],
+      "summary": "5+ years of experience mentioned. recent roles include toward pure Python backend roles., Full Stack Developer \u2014 FinTech Startup. skills include Python, Django, Flask, AWS, Docker.",
+      "source_file": "David_Chen.pdf",
+      "cv_excerpt": "David Chen david.chen@email.com | +1 (646) 555-0202 | New York, NY PROFESSIONAL SUMMARY Full-stack developer with 5 years of experience primarily in Node.js and Python. Backend-leaning with growing experience in cloud deployments and containerization. Strong communicator and fast learner transitioning toward pure Python backend roles. WORK EXPERIENCE Full Stack Developer \u2014 FinTech Startup Apr 2021 \u2013 Present | New Yor"
+    }
   },
   "emma_laurent_cv": {
     "candidate_id": "emma_laurent_cv",
-    "source_file": "Emma_Laurent_CV.pdf",
     "namespace": "__default__",
-    "chunks": 3,
-    "ingested_at": "2026-03-03T18:33:54.202316Z",
-    "preview": "Emma Laurent\nemma.laurent@email.com\n+33 6 45 12 89 30\nLyon, France\nProfessional Summary\nCreative UX/UI Designer with 6 years of experience crafting intuitive digital experiences for mobile\nand web applications. Passionate about human-centered design, accessibility, and visual\nstorytelling. Strong collaborator working closely with product managers and marketing teams to\ntranslate user needs into engaging interfaces.\nWork Experience\nSenior Product Designer — BrightApps Studio\nMarch 2020 – Present ",
-    "match_score": null,
-    "status": "pending",
-    "gaps": []
+    "match_score": 0.543,
+    "screening_score": 0.543,
+    "final_score": null,
+    "status": "shortlisted",
+    "gaps": [
+      {
+        "requirement": "Python",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Redis",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "CI/CD tooling (GitHub Actions, GitLab CI, or Jenkins)",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      },
+      {
+        "requirement": "CI/CD",
+        "severity": "critical",
+        "weight": 1.0,
+        "reason": "No direct evidence found in the full CV text.",
+        "status": "unanswered"
+      }
+    ],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6273,
+      "requirement_coverage": 0.16,
+      "seniority_match": 1.0,
+      "max": 0.640317738,
+      "avg_top": 0.6255911986666667,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [],
+          "evidence": "CV indicates 6 years of experience."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": false,
+          "score": 0.0,
+          "matched_terms": [],
+          "evidence": "No direct evidence found in the full CV text."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.6403,
+      0.6278,
+      0.6087
+    ],
+    "created_at": "2026-04-20T10:06:45.920631",
+    "updated_at": "2026-04-20T10:06:45.920661",
+    "source_file": "Emma_Laurent_CV.pdf",
+    "preview": "Emma Laurent emma.laurent@email.com +33 6 45 12 89 30 Lyon, France Professional Summary Creative UX/UI Designer with 6 years of experience crafting intuitive digital experiences for mobile and web applications. Passionate about human-centered design, accessibility, and visual storytelling. Strong collaborator working closely with product managers and marketing teams to translate user needs into engaging interfaces. Work Experience Senior Product Designer \u2014 BrightApps Studio March 2020 \u2013 Present | Lyon, France \u007f Led end-to-end design of mobile applications for lifestyle and wellness startups. \u007f Conducted user interviews and usability testing sessions. \u007f Built interactive prototypes using Figm",
+    "profile_json": {
+      "name": "Emma Laurent Cv",
+      "years_of_experience": 6,
+      "skills": [
+        "Testing"
+      ],
+      "past_roles": [],
+      "education": [
+        "Master\u2019s Degree in Digital Design \u2014 Universit\u00e9 de Lyon (2016)",
+        "Bachelor\u2019s Degree in Graphic Communication \u2014 Universit\u00e9 de Bordeaux (2014)"
+      ],
+      "summary": "6+ years of experience mentioned. skills include Testing.",
+      "source_file": "Emma_Laurent_CV.pdf",
+      "cv_excerpt": "Emma Laurent emma.laurent@email.com +33 6 45 12 89 30 Lyon, France Professional Summary Creative UX/UI Designer with 6 years of experience crafting intuitive digital experiences for mobile and web applications. Passionate about human-centered design, accessibility, and visual storytelling. Strong collaborator working closely with product managers and marketing teams to translate user needs into engaging interfaces. W"
+    }
+  },
+  "sara_patel": {
+    "candidate_id": "sara_patel",
+    "namespace": "__default__",
+    "match_score": 0.812,
+    "screening_score": 0.812,
+    "final_score": null,
+    "status": "shortlisted",
+    "gaps": [],
+    "hr_summary": "",
+    "score_details": {
+      "semantic_similarity": 0.6581,
+      "requirement_coverage": 1.0,
+      "seniority_match": 1.0,
+      "max": 0.698850572,
+      "avg_top": 0.6539693476666667,
+      "requirements": [
+        {
+          "requirement": "5+ years of relevant experience",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [],
+          "evidence": "CV indicates 7 years of experience."
+        },
+        {
+          "requirement": "Python",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Python"
+          ],
+          "evidence": "Found evidence for: Python."
+        },
+        {
+          "requirement": "Python backend framework (FastAPI or Django)",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "FastAPI",
+            "Django"
+          ],
+          "evidence": "Found evidence for: FastAPI, Django."
+        },
+        {
+          "requirement": "REST APIs",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "REST APIs"
+          ],
+          "evidence": "Found evidence for: REST APIs."
+        },
+        {
+          "requirement": "Redis",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Redis"
+          ],
+          "evidence": "Found evidence for: Redis."
+        },
+        {
+          "requirement": "Docker",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Docker"
+          ],
+          "evidence": "Found evidence for: Docker."
+        },
+        {
+          "requirement": "Kubernetes",
+          "severity": "important",
+          "weight": 0.75,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "Kubernetes"
+          ],
+          "evidence": "Found evidence for: Kubernetes."
+        },
+        {
+          "requirement": "Cloud platform experience (AWS, GCP, or Azure)",
+          "severity": "critical",
+          "weight": 1.0,
+          "matched": true,
+          "score": 1.0,
+          "matched_terms": [
+            "AWS",
+            "Azure"
+          ],
+          "evidence": "Found evidence for: AWS, Azure."
+        }
+      ],
+      "weights": {
+        "semantic_similarity": 0.55,
+        "requirement_coverage": 0.3,
+        "seniority_match": 0.15
+      }
+    },
+    "top_chunk_scores": [
+      0.6989,
+      0.6401,
+      0.623
+    ],
+    "created_at": "2026-04-20T10:06:47.755439",
+    "updated_at": "2026-04-20T10:06:47.755463",
+    "source_file": "Sara_Patel.pdf",
+    "preview": "Sara Patel sara.patel@email.com | +44 7911 555 0505 | London, UK | github.com/sarapatel PROFESSIONAL SUMMARY Backend engineer with 7 years of Python experience specialising in high-throughput APIs, event-driven architectures, and cloud-native systems. Experienced across AWS and Azure, with a strong focus on observability, performance, and engineering best practices. WORK EXPERIENCE Senior Software Engineer \u2013 Backend \u2014 GlobalPay Ltd. Feb 2019 \u2013 Present | London, UK \u007f Designed and owned Python microservices using FastAPI, handling 100M+ transactions/month. \u007f Deployed and managed workloads on Kubernetes (AKS on Azure) with Helm charts. \u007f Built Kafka-based event streaming pipeline replacing lega",
+    "profile_json": {
+      "name": "Sara Patel",
+      "years_of_experience": 7,
+      "skills": [
+        "Python",
+        "FastAPI",
+        "Django",
+        "REST APIs",
+        "AWS",
+        "Azure",
+        "Docker",
+        "Kubernetes",
+        "Redis",
+        "CI/CD"
+      ],
+      "past_roles": [
+        "observability, performance, and engineering best practices.",
+        "Senior Software Engineer \u2013 Backend \u2014 GlobalPay Ltd.",
+        "\u007f Drove adoption of TDD and BDD across 3 engineering squads.",
+        "\u007f Mentored 4 junior engineers; ran internal Python best-practices sessions."
+      ],
+      "education": [
+        "observability, performance, and engineering best practices.",
+        "\u007f Drove adoption of TDD and BDD across 3 engineering squads."
+      ],
+      "summary": "7+ years of experience mentioned. recent roles include observability, performance, and engineering best practices., Senior Software Engineer \u2013 Backend \u2014 GlobalPay Ltd.. skills include Python, FastAPI, Django, REST APIs, AWS.",
+      "source_file": "Sara_Patel.pdf",
+      "cv_excerpt": "Sara Patel sara.patel@email.com | +44 7911 555 0505 | London, UK | github.com/sarapatel PROFESSIONAL SUMMARY Backend engineer with 7 years of Python experience specialising in high-throughput APIs, event-driven architectures, and cloud-native systems. Experienced across AWS and Azure, with a strong focus on observability, performance, and engineering best practices. WORK EXPERIENCE Senior Software Engineer \u2013 Backend"
+    }
   }
 }
